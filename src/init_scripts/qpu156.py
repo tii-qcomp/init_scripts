@@ -66,7 +66,7 @@ from init_scripts._common import (
     Instrument, Cluster, qblox,
     # quantify (quantify_core fallback handled in _common)
     pqm, get_datadir, set_datadir, load_settings_onto_instrument, InstrumentMonitor,
-    quantify_core, quantify_scheduler,
+    quantify, quantify_scheduler,
     InstrumentCoordinator, ClusterComponent, GenericInstrumentCoordinatorComponent,
     search_settable_param,
     # SCQT
@@ -80,6 +80,13 @@ from init_scripts._common import (
     setup_cluster, setup_device, setup_instrument_coordinator, setup_utilities,
     helper_configure_ladder, helper_defaults,
 )
+
+# -- Version checks --
+print(f"scqt version            : {scqt.__version__}")
+print(f"grace version           : {grace.__version__}")
+print(f"quantify version        : {quantify.__version__}")
+print(f"quantify-scheduler ver  : {quantify_scheduler.__version__}")
+print(f"qblox-instruments ver   : {qblox.__version__}")
 
 # Benchmarking start
 t0 = time.time()

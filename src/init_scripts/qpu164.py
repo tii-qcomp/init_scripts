@@ -1,7 +1,7 @@
 """
 Initialization script for TII QPU164.
 
-Author: TII QRC
+Author: Juan Villegas, TII QRC
 Version: 1.1
 Date: 2026-03-02
 
@@ -77,7 +77,7 @@ from init_scripts._common import (
     Instrument, Cluster, qblox,
     # quantify (quantify_core fallback handled in _common)
     pqm, get_datadir, set_datadir, load_settings_onto_instrument, InstrumentMonitor,
-    quantify_core, quantify_scheduler,
+    quantify, quantify_scheduler,
     InstrumentCoordinator, ClusterComponent, GenericInstrumentCoordinatorComponent,
     search_settable_param,
     # SCQT
@@ -95,7 +95,7 @@ from init_scripts._common import (
 # -- Version checks --
 print(f"scqt version            : {scqt.__version__}")
 print(f"grace version           : {grace.__version__}")
-print(f"quantify-core version   : {quantify_core.__version__}")
+print(f"quantify version        : {quantify.__version__}")
 print(f"quantify-scheduler ver  : {quantify_scheduler.__version__}")
 print(f"qblox-instruments ver   : {qblox.__version__}")
 
