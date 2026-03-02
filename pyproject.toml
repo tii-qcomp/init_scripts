@@ -1,0 +1,10 @@
+[project]
+name = "init_scripts"
+version = "0.0.1"
+description = "Collection of lab init scripts"
+
+dependencies = [
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
