@@ -42,15 +42,15 @@ from qblox_instruments import Cluster
 try:
     import quantify
     from quantify.data.handling import get_datadir, set_datadir
-    import quantify.visualization.pyqt_plotmon as pqm
     from quantify.utilities.experiment_helpers import load_settings_onto_instrument
-    from quantify.visualization.instrument_monitor import InstrumentMonitor
-except ImportError:
+except ImportError as e:
+    print("Cannot import quantify, using quantify_core")
+    print(e)
     import quantify_core as quantify
     from quantify_core.data.handling import get_datadir, set_datadir
-    import quantify_core.visualization.pyqt_plotmon as pqm
+    import quantify_core.visualization.pyqt_plotmon as pqm #Stilll needs to be handled
     from quantify_core.utilities.experiment_helpers import load_settings_onto_instrument
-    from quantify_core.visualization.instrument_monitor import InstrumentMonitor
+    from quantify_core.visualization.instrument_monitor import InstrumentMonitor #Stilll needs to be handled
 
 # import quantify_core
 import quantify_scheduler

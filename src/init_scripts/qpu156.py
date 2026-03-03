@@ -11,13 +11,14 @@ This script sets up the hardware configuration, instrument connections, and quan
 
 CLUSTER_IP = "192.168.0.2"     # IP address of the cluster. Change this if your cluster has a different IP address.
 PLATFORM_NAME = "qpu156"        # This should be the same as the name used in the base_calibration notebook and the name used for the data directory. Consider changing this to a more descriptive name if you have multiple platforms.
-LOAD_CFG_FILE = True            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
+LOAD_CFG_FILE = False            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
 HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
     "config_type": "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
     "hardware_description": {
         "cluster0": {
             "instrument_type": "Cluster",
             "ref": "internal",
+            "sequence_to_file": False,
             "modules": {
                 "6": {"instrument_type": "QCM_RF"},
                 "12": {"instrument_type": "QCM_RF"},
@@ -27,12 +28,35 @@ HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII
         },
     },
     "hardware_options": {
+        "latency_corrections": {
+            f"q{i}:mw-q{i}.01": 4e-9 for i in range(5)
+        },
         "modulation_frequencies": 
             # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
-            {f"q{i}:{tipo1}-q{i}.{tipo2}": {"lo_freq": 7.26e9 if tipo1 == "res" and tipo2 == "ro" else 3.9e9 + i*0.2e9} 
+            {f"q{i}:{tipo1}-q{i}.{tipo2}": {"lo_freq": 7.32e9 if tipo1 == "res" and tipo2 == "ro" else 3.9e9 + i*0.2e9} 
             for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
             for i in range(5) 
         },
+        "output_att": {
+            "cluster0.module20.complex_output_0": 36, 
+            "cluster0.module14.complex_output_1": 10,
+            "cluster0.module6.complex_output_0": 10,
+            "cluster0.module6.complex_output_1": 10,
+            "cluster0.module12.complex_output_0": 10,
+            "cluster0.module12.complex_output_1": 10,
+        },
+        "input_gain": {
+            "cluster0.module20.complex_input_0": 0, # Gain in dB for the return signal
+        },
+        "mixer_corrections": {
+             f"q{i}:{t1}-q{i}.{t2}": {
+                "dc_offset_i": 0.0,
+                "dc_offset_q": 0.0,
+                "amp_ratio": 1.0,
+                "phase_error": 0.0,
+             } for (t1, t2) in [("res", "ro"), ("mw", "01")]
+             for i in range(5)
+        }
     },
     "connectivity": {
         "graph": [
@@ -42,11 +66,8 @@ HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII
             ["cluster0.module6.complex_output_0", "q2:mw"],
             ["cluster0.module12.complex_output_0", "q3:mw"],
             ["cluster0.module12.complex_output_1", "q4:mw"],
-            ["cluster0.module20.complex_output_0", "q0:res"],
-            ["cluster0.module20.complex_output_0", "q1:res"],
-            ["cluster0.module20.complex_output_0", "q2:res"],
-            ["cluster0.module20.complex_output_0", "q3:res"],
-            ["cluster0.module20.complex_output_0", "q4:res"],
+            *[["cluster0.module20.complex_output_0", f"q{i}:res"] for i in range(5)],
+            ["cluster0.module20.complex_input_0", "q0:res"], # Feedback path
             ["cluster0.module20.complex_output_0", "f0:in"],
         ]
     },
@@ -65,7 +86,7 @@ from init_scripts._common import (
     # instruments
     Instrument, Cluster, qblox,
     # quantify (quantify_core fallback handled in _common)
-    pqm, get_datadir, set_datadir, load_settings_onto_instrument, InstrumentMonitor,
+    get_datadir, set_datadir, load_settings_onto_instrument,
     quantify, quantify_scheduler,
     InstrumentCoordinator, ClusterComponent, GenericInstrumentCoordinatorComponent,
     search_settable_param,
