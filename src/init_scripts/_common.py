@@ -72,6 +72,20 @@ from quantify_scheduler.instrument_coordinator.instrument_coordinator import (
 from quantify_scheduler.instrument_coordinator.utility import search_settable_param
 
 # ---------------------------------------------------------------------------
+# Quantify Pydantic Types
+# ---------------------------------------------------------------------------
+from quantify.backends.types.common import (
+    MixerCorrections, 
+    SoftwareDistortionCorrection, 
+    HardwareDistortionCorrection, 
+    ModulationFrequencies, 
+    HardwareOptions,
+    Connectivity,
+)
+from quantify_scheduler.backends.types.qblox import  QbloxHardwareDescription, ClusterModuleDescription
+from quantify_scheduler.backends.qblox_backend import QbloxHardwareCompilationConfig
+
+# ---------------------------------------------------------------------------
 # SCQT
 # ---------------------------------------------------------------------------
 import superconducting_qubit_tools as scqt

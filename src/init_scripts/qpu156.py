@@ -10,16 +10,10 @@ This script sets up the hardware configuration, instrument connections, and quan
 """
 
 # Import pydantic models for hardware configuration
-from quantify.backends.types.common import (
-    MixerCorrections, 
-    SoftwareDistortionCorrection, 
-    HardwareDistortionCorrection, 
-    ModulationFrequencies, 
-    HardwareOptions,
-    Connectivity,
-)
-from quantify_scheduler.backends.types.qblox import (
-    QbloxHardwareCompilationConfig, QbloxHardwareDescription, ClusterModuleDescription
+from init_scripts._common import (
+    ClusterModuleDescription, ClusterDescription, QbloxHardwareDescription,
+    QbloxHardwareCompilationConfig, HardwareOptions, ModulationFrequencies, MixerCorrections,
+    Connectivity, SoftwareDistortionCorrection
 )
 
 from pydantic import ConfigDict
