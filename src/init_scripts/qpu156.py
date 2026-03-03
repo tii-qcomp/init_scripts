@@ -12,7 +12,7 @@ This script sets up the hardware configuration, instrument connections, and quan
 # Import pydantic models for hardware configuration
 from init_scripts._common import (
     # pydantic models for hardware configuration
-    QbloxHardwareCompilationConfig, QbloxHardwareDescription, HardwareOptions, Connectivity,
+    QbloxHardwareCompilationConfig, QbloxHardwareDescription, ClusterDescription, HardwareOptions, Connectivity,
     # pydantic models for settings 
     ModulationFrequencies, MixerCorrections, SoftwareDistortionCorrection, HardwareDistortionCorrection,
     # qblox module types
@@ -25,7 +25,7 @@ CLUSTER_IP = "192.168.0.2"     # IP address of the cluster. Change this if your 
 PLATFORM_NAME = "qpu156"        # This should be the same as the name used in the base_calibration notebook and the name used for the data directory. Consider changing this to a more descriptive name if you have multiple platforms.
 LOAD_CFG_FILE = False            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
 
-hw_description = QbloxHardwareDescription(
+hw_description = ClusterDescription(
             instrument_type="Cluster",
             ip = CLUSTER_IP,
             ref="internal", # The reference source for the instrument.
