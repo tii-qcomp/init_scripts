@@ -16,6 +16,13 @@ import time
 from contextlib import suppress
 from importlib import reload
 from pathlib import Path
+from pydantic import BaseModel, Field
+
+# ---------------------------------------------------------------------------
+# Mixer settings dataclass
+# ---------------------------------------------------------------------------
+
+from quantify.backends.types.common import MixerCorrections
 
 # ---------------------------------------------------------------------------
 # Numeric / Visualization
@@ -52,7 +59,6 @@ except ImportError as e:
     from quantify_core.utilities.experiment_helpers import load_settings_onto_instrument
     from quantify_core.visualization.instrument_monitor import InstrumentMonitor #Stilll needs to be handled
 
-# import quantify_core
 import quantify_scheduler
 
 # ---------------------------------------------------------------------------
@@ -119,10 +125,16 @@ def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
     Returns:
         The configured :class:`~quantify_scheduler.instrument_coordinator.InstrumentCoordinator`.
     """
-    active_ic = InstrumentCoordinator.instances()
-    ic_names = [ic.name for ic in active_ic]
+    active_ics = InstrumentCoordinator.instances()
+    ic_names = [ic.name for ic in active_ics]
     if "instrument_coordinator" in ic_names:
-        return active_ic[ic_names.index("instrument_coordinator")]
+        ic = active_ics[ic_names.index("instrument_coordinator")]
+        if not all(cluster.name in ic.components for cluster in clusters):
+            raise RuntimeError(
+                "An InstrumentCoordinator named 'instrument_coordinator' already exists, but it does not contain all the required clusters."
+            )
+        else:
+            return ic # Reuse existing instance
 
     instrument_coordinator = InstrumentCoordinator(
         "instrument_coordinator", add_default_generic_icc=False
@@ -132,7 +144,7 @@ def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
     return instrument_coordinator
 
 
-def setup_utilities() -> tuple:
+def setup_utilities() -> tuple[MeasurementControl, MeasurementControl]:
     """
     Return (or create) the MeasurementControl and nested MeasurementControl singletons.
 

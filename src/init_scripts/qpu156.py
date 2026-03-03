@@ -9,6 +9,8 @@ This script sets up the hardware configuration, instrument connections, and quan
 
 """
 
+from _common import MixerCorrections
+
 CLUSTER_IP = "192.168.0.2"     # IP address of the cluster. Change this if your cluster has a different IP address.
 PLATFORM_NAME = "qpu156"        # This should be the same as the name used in the base_calibration notebook and the name used for the data directory. Consider changing this to a more descriptive name if you have multiple platforms.
 LOAD_CFG_FILE = False            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
@@ -49,12 +51,7 @@ HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII
             "cluster0.module20.complex_input_0": 0, # Gain in dB for the return signal
         },
         "mixer_corrections": {
-             f"q{i}:{t1}-q{i}.{t2}": {
-                "dc_offset_i": 0.0,
-                "dc_offset_q": 0.0,
-                "amp_ratio": 1.0,
-                "phase_error": 0.0,
-             } for (t1, t2) in [("res", "ro"), ("mw", "01")]
+             f"q{i}:{t1}-q{i}.{t2}": MixerCorrections().model_dump() for (t1, t2) in [("res", "ro"), ("mw", "01")]
              for i in range(5)
         }
     },
