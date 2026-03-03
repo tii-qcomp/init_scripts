@@ -18,7 +18,9 @@ from quantify.backends.types.common import (
     HardwareOptions,
     Connectivity,
 )
-from quantify_scheduler.backends.types.qblox_backend import QbloxHardwareCompilationConfig, QbloxHardwareDescription, ClusterModuleDescription
+from quantify.backends.types.qblox import (
+    QbloxHardwareCompilationConfig, QbloxHardwareDescription, ClusterModuleDescription
+)
 
 from pydantic import ConfigDict
 
@@ -31,8 +33,8 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
         "cluster0": QbloxHardwareDescription(
             instrument_type="Cluster",
             ip = CLUSTER_IP,
-            ref="internal",
-            sequence_to_file=False,
+            ref="internal", # The reference source for the instrument.
+            sequence_to_file=False, # Write sequencer programs to files for (all modules in this) instrument.
             modules={
                 "6": ClusterModuleDescription(instrument_type="QCM_RF"),
                 "12": ClusterModuleDescription(instrument_type="QCM_RF"),
