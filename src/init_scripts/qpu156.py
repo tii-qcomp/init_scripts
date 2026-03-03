@@ -24,10 +24,8 @@ from pydantic import ConfigDict
 CLUSTER_IP = "192.168.0.2"     # IP address of the cluster. Change this if your cluster has a different IP address.
 PLATFORM_NAME = "qpu156"        # This should be the same as the name used in the base_calibration notebook and the name used for the data directory. Consider changing this to a more descriptive name if you have multiple platforms.
 LOAD_CFG_FILE = False            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
-HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
-    config_type =  "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
-    hardware_description = {
-        "cluster0": QbloxHardwareDescription(
+
+hw_description = QbloxHardwareDescription(
             instrument_type="Cluster",
             ip = CLUSTER_IP,
             ref="internal", # The reference source for the instrument.
@@ -39,7 +37,10 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
                 "20": QRMRFDescription(),
             },
         ),
-    },
+
+HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
+    config_type =  "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
+    hardware_description = {"cluster0": hw_description},
     hardware_options = HardwareOptions(
         latency_corrections={
             f"q{i}:mw-q{i}.01": 4e-9 for i in range(5)
