@@ -18,7 +18,7 @@ from quantify.backends.types.common import (
     HardwareOptions,
     Connectivity,
 )
-from quantify.backends.types.qblox import QbloxHardwareCompilationConfig, QbloxHardwareDescription, ClusterModuleDescription
+from quantify_scheduler.backends.types.qblox_backend import QbloxHardwareCompilationConfig, QbloxHardwareDescription, ClusterModuleDescription
 
 from pydantic import ConfigDict
 
