@@ -11,9 +11,10 @@ This script sets up the hardware configuration, instrument connections, and quan
 
 # Import pydantic models for hardware configuration
 from init_scripts._common import (
-    ClusterModuleDescription, ClusterDescription, QbloxHardwareDescription,
-    QbloxHardwareCompilationConfig, HardwareOptions, ModulationFrequencies, MixerCorrections,
-    Connectivity, SoftwareDistortionCorrection
+    # pydantic models for hardware configuration
+    QbloxHardwareCompilationConfig, QbloxHardwareDescription, HardwareOptions, Connectivity, ClusterModuleDescription,
+    # pydantic models for settings 
+    ModulationFrequencies, MixerCorrections, SoftwareDistortionCorrection, HardwareDistortionCorrection
 )
 
 from pydantic import ConfigDict
