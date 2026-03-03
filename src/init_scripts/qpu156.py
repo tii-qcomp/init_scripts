@@ -16,17 +16,19 @@ from quantify.backends.types.common import (
     HardwareDistortionCorrection, 
     ModulationFrequencies, 
     HardwareOptions,
-    HardwareDescription,
-    Connectivity,)
+    Connectivity,
+    QbloxHardwareCompilationConfig)
+from quantify.backends.types.qblox import QbloxHardwareCompilationConfig, QbloxHardwareDescription
+
 from pydantic import ConfigDict
 
 CLUSTER_IP = "192.168.0.2"     # IP address of the cluster. Change this if your cluster has a different IP address.
 PLATFORM_NAME = "qpu156"        # This should be the same as the name used in the base_calibration notebook and the name used for the data directory. Consider changing this to a more descriptive name if you have multiple platforms.
 LOAD_CFG_FILE = False            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
-HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
-    "config_type": "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
-    "hardware_description": {
-        "cluster0": HardwareDescription(
+HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
+    config_type =  "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
+    hardware_description = {
+        "cluster0": QbloxHardwareDescription(
             instrument_type="Cluster",
             ref="internal",
             sequence_to_file=False,
@@ -38,7 +40,7 @@ HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII
             },
         ),
     },
-    "hardware_options": HardwareOptions(
+    hardware_options = HardwareOptions(
         latency_corrections={
             f"q{i}:mw-q{i}.01": 4e-9 for i in range(5)
         },
@@ -85,7 +87,7 @@ HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII
         #         ) for i in range(5)
         # },
     ),
-    "connectivity": Connectivity.model_validate(
+    connectivity = Connectivity.model_validate(
         connectivity_dict := {"graph":[
             ("cluster0.module14.complex_output_1", "q0:mw"),
             ("cluster0.module6.complex_output_1", "q1:mw"),
@@ -97,7 +99,7 @@ HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII
             ("cluster0.module20.complex_output_0", "f0:in"), # Feedback path
         ]}
     ),
-}
+)
 HARDWARE_CFG_TII["hardware_options"].modulation_frequencies["f0:in-f0.ro"] = {"lo_freq": 7.26e9}
 
 ############################################
