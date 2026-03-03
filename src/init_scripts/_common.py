@@ -82,7 +82,10 @@ from quantify.backends.types.common import (
     HardwareOptions,
     Connectivity,
 )
-from quantify_scheduler.backends.types.qblox import  QbloxHardwareDescription, ClusterModuleDescription
+from quantify_scheduler.backends.types.qblox import (
+    QbloxHardwareDescription, ClusterModuleDescription,
+    QRMDescription, QCMDescription, QRMRFDescription, QCMRFDescription, QTMDescription
+)
 from quantify_scheduler.backends.qblox_backend import QbloxHardwareCompilationConfig
 
 # ---------------------------------------------------------------------------

@@ -12,9 +12,11 @@ This script sets up the hardware configuration, instrument connections, and quan
 # Import pydantic models for hardware configuration
 from init_scripts._common import (
     # pydantic models for hardware configuration
-    QbloxHardwareCompilationConfig, QbloxHardwareDescription, HardwareOptions, Connectivity, ClusterModuleDescription,
+    QbloxHardwareCompilationConfig, QbloxHardwareDescription, HardwareOptions, Connectivity,
     # pydantic models for settings 
-    ModulationFrequencies, MixerCorrections, SoftwareDistortionCorrection, HardwareDistortionCorrection
+    ModulationFrequencies, MixerCorrections, SoftwareDistortionCorrection, HardwareDistortionCorrection,
+    # qblox module types
+    ClusterModuleDescription, QCMDescription, QRMRFDescription, QCMRFDescription
 )
 
 from pydantic import ConfigDict
@@ -31,10 +33,10 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             ref="internal", # The reference source for the instrument.
             sequence_to_file=False, # Write sequencer programs to files for (all modules in this) instrument.
             modules={
-                "6": ClusterModuleDescription(instrument_type="QCM_RF"),
-                "12": ClusterModuleDescription(instrument_type="QCM_RF"),
-                "14": ClusterModuleDescription(instrument_type="QCM_RF"),
-                "20": ClusterModuleDescription(instrument_type="QRM_RF"),
+                "6": QCMRFDescription(),
+                "12": QCMRFDescription(),
+                "14": QCMRFDescription(),
+                "20": QRMRFDescription(),
             },
         ),
     },
