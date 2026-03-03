@@ -18,7 +18,7 @@ from quantify.backends.types.common import (
     HardwareOptions,
     Connectivity,
     QbloxHardwareCompilationConfig)
-from quantify.backends.types.qblox import QbloxHardwareCompilationConfig, QbloxHardwareDescription
+from quantify.backends.types.qblox import QbloxHardwareCompilationConfig, QbloxHardwareDescription, ClusterModuleDescription
 
 from pydantic import ConfigDict
 
@@ -30,13 +30,14 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
     hardware_description = {
         "cluster0": QbloxHardwareDescription(
             instrument_type="Cluster",
+            ip = CLUSTER_IP,
             ref="internal",
             sequence_to_file=False,
             modules={
-                "6": {"instrument_type": "QCM_RF"},
-                "12": {"instrument_type": "QCM_RF"},
-                "14": {"instrument_type": "QCM_RF"},
-                "20": {"instrument_type": "QRM_RF"},
+                "6": ClusterModuleDescription(instrument_type="QCM_RF"),
+                "12": ClusterModuleDescription(instrument_type="QCM_RF"),
+                "14": ClusterModuleDescription(instrument_type="QCM_RF"),
+                "20": ClusterModuleDescription(instrument_type="QRM_RF"),
             },
         ),
     },
