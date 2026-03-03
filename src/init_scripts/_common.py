@@ -18,11 +18,6 @@ from importlib import reload
 from pathlib import Path
 from pydantic import BaseModel, Field
 
-# ---------------------------------------------------------------------------
-# Mixer settings dataclass
-# ---------------------------------------------------------------------------
-
-from quantify.backends.types.common import MixerCorrections
 
 # ---------------------------------------------------------------------------
 # Numeric / Visualization

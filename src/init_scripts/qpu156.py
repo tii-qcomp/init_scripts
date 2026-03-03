@@ -9,7 +9,16 @@ This script sets up the hardware configuration, instrument connections, and quan
 
 """
 
-from _common import MixerCorrections
+# Import pydantic models for hardware configuration
+from quantify.backends.types.common import (
+    MixerCorrections, 
+    SoftwareDistortionCorrection, 
+    HardwareDistortionCorrection, 
+    ModulationFrequencies, 
+    HardwareOptions,
+    HardwareDescription,
+    Connectivity,)
+from pydantic import ConfigDict
 
 CLUSTER_IP = "192.168.0.2"     # IP address of the cluster. Change this if your cluster has a different IP address.
 PLATFORM_NAME = "qpu156"        # This should be the same as the name used in the base_calibration notebook and the name used for the data directory. Consider changing this to a more descriptive name if you have multiple platforms.
@@ -17,29 +26,30 @@ LOAD_CFG_FILE = False            # Set to True to load hardware configuration fr
 HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
     "config_type": "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
     "hardware_description": {
-        "cluster0": {
-            "instrument_type": "Cluster",
-            "ref": "internal",
-            "sequence_to_file": False,
-            "modules": {
+        "cluster0": HardwareDescription(
+            instrument_type="Cluster",
+            ref="internal",
+            sequence_to_file=False,
+            modules={
                 "6": {"instrument_type": "QCM_RF"},
                 "12": {"instrument_type": "QCM_RF"},
                 "14": {"instrument_type": "QCM_RF"},
                 "20": {"instrument_type": "QRM_RF"},
             },
-        },
+        ),
     },
-    "hardware_options": {
-        "latency_corrections": {
+    "hardware_options": HardwareOptions(
+        latency_corrections={
             f"q{i}:mw-q{i}.01": 4e-9 for i in range(5)
         },
-        "modulation_frequencies": 
+        modulation_frequencies= 
             # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
-            {f"q{i}:{tipo1}-q{i}.{tipo2}": {"lo_freq": 7.32e9 if tipo1 == "res" and tipo2 == "ro" else 3.9e9 + i*0.2e9} 
+            {f"q{i}:{tipo1}-q{i}.{tipo2}": 
+                ModulationFrequencies(lo_freq = 7.26e9) if tipo1 == "res" and tipo2 == "ro" else ModulationFrequencies(lo_freq = 3.9e9 + i*0.2e9)
             for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
             for i in range(5) 
         },
-        "output_att": {
+        output_att={
             "cluster0.module20.complex_output_0": 36, 
             "cluster0.module14.complex_output_1": 10,
             "cluster0.module6.complex_output_0": 10,
@@ -47,29 +57,48 @@ HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII
             "cluster0.module12.complex_output_0": 10,
             "cluster0.module12.complex_output_1": 10,
         },
-        "input_gain": {
+        input_gain={
             "cluster0.module20.complex_input_0": 0, # Gain in dB for the return signal
         },
-        "mixer_corrections": {
+        mixer_corrections={
              f"q{i}:{t1}-q{i}.{t2}": MixerCorrections().model_dump() for (t1, t2) in [("res", "ro"), ("mw", "01")]
              for i in range(5)
-        }
-    },
-    "connectivity": {
-        "graph": [
-            # ["cluster0.module14.complex_output_0", "q0:mw"],
-            ["cluster0.module14.complex_output_1", "q0:mw"],
-            ["cluster0.module6.complex_output_1", "q1:mw"],
-            ["cluster0.module6.complex_output_0", "q2:mw"],
-            ["cluster0.module12.complex_output_0", "q3:mw"],
-            ["cluster0.module12.complex_output_1", "q4:mw"],
-            *[["cluster0.module20.complex_output_0", f"q{i}:res"] for i in range(5)],
-            ["cluster0.module20.complex_input_0", "q0:res"], # Feedback path
-            ["cluster0.module20.complex_output_0", "f0:in"],
-        ]
-    },
+        },
+        model_config = ConfigDict(
+            extra="forbid",
+            # ensures exceptions are raised when passing extra argument that are not
+            # part of a model when initializing.
+            validate_assignment=True,
+            # run validation when assigning attributes
+            arbitrary_types_allowed=True,
+        ),
+        # Software distortions correction for flux lines (example, modify as needed)
+        # distortion_corrections = {
+        #     f"q{i}:fl-cl0.baseband": SoftwareDistortionCorrection(
+        #         filter_func="scipy.signal.lfilter",
+        #             input_var_name="x",
+        #             kwargs={
+        #                 "b": [0, 0.25, 0.5],
+        #                 "a": [1]
+        #             },
+        #             clipping_values=[-2.5, 2.5]
+        #         ) for i in range(5)
+        # },
+    ),
+    "connectivity": Connectivity.model_validate(
+        connectivity_dict := {"graph":[
+            ("cluster0.module14.complex_output_1", "q0:mw"),
+            ("cluster0.module6.complex_output_1", "q1:mw"),
+            ("cluster0.module6.complex_output_0", "q2:mw"),
+            ("cluster0.module12.complex_output_0", "q3:mw"),
+            ("cluster0.module12.complex_output_1", "q4:mw"),
+            # *[["cluster0.module20.complex_output_0", f"q{i}:res"] for i in range(5)],
+            ("cluster0.module20.complex_input_0", ["q0:res", "q1:res","q2:res","q3:res","q4:res"]), # Probe path
+            ("cluster0.module20.complex_output_0", "f0:in"), # Feedback path
+        ]}
+    ),
 }
-HARDWARE_CFG_TII["hardware_options"]["modulation_frequencies"]["f0:in-f0.ro"] = {"lo_freq": 7.26e9}
+HARDWARE_CFG_TII["hardware_options"].modulation_frequencies["f0:in-f0.ro"] = {"lo_freq": 7.26e9}
 
 ############################################
 # 1. Imports
