@@ -39,7 +39,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
                 "12": QCMRFDescription(),
                 "14": QCMRFDescription(),
                 "20": QRMRFDescription(),
-            },
+            }
         )
     },
     hardware_options = QbloxHardwareOptions(
@@ -80,7 +80,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             ) 
             for (t1, t2) in [("res", "ro"), ("mw", "01")]
             for i in range(5)
-        },
+        }
         # Distortions correction for flux lines (example, modify as needed)
         # distortion_corrections = {
         #     f"q{i}:fl-cl0.baseband": QbloxHardwareDistortionCorrection(
@@ -108,7 +108,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             ("cluster0.module20.complex_output_0", "q4:res"),
             ("cluster0.module20.complex_output_0",  "f0:in"),   # Feedline RX path (on TX port — required by SCQT)
         ]}
-    ).model_dump(),
+    ).model_dump()
 )
 
 ############################################
