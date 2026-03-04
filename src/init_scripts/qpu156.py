@@ -12,9 +12,9 @@ This script sets up the hardware configuration, instrument connections, and quan
 # Import pydantic models for hardware configuration
 from init_scripts._common import (
     # pydantic models for hardware configuration
-    QbloxHardwareCompilationConfig, QbloxHardwareDescription, ClusterDescription, HardwareOptions, Connectivity,
+    QbloxHardwareCompilationConfig, QbloxHardwareDescription, ClusterDescription, QbloxHardwareOptions, Connectivity,
     # pydantic models for settings 
-    ModulationFrequencies, MixerCorrections, SoftwareDistortionCorrection, HardwareDistortionCorrection,
+    ModulationFrequencies, QbloxMixerCorrections, SoftwareDistortionCorrection, HardwareDistortionCorrection,
     # qblox module types
     ClusterModuleDescription, QCMDescription, QRMRFDescription, QCMRFDescription
 )
@@ -41,7 +41,7 @@ hw_description = ClusterDescription(
 HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
     config_type =  "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
     hardware_description = {"cluster0": hw_description},
-    hardware_options = HardwareOptions(
+    hardware_options = QbloxHardwareOptions(
         latency_corrections={
             f"q{i}:mw-q{i}.01": 4e-9 for i in range(5)
         },
@@ -64,7 +64,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             "cluster0.module20.complex_input_0": 0, # Gain in dB for the return signal
         },
         mixer_corrections={
-             f"q{i}:{t1}-q{i}.{t2}": MixerCorrections().model_dump() for (t1, t2) in [("res", "ro"), ("mw", "01")]
+             f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections().model_dump() for (t1, t2) in [("res", "ro"), ("mw", "01")]
              for i in range(5)
         },
         model_config = ConfigDict(
@@ -75,6 +75,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             # run validation when assigning attributes
             arbitrary_types_allowed=True,
         ),
+        sequencer_options = None,
         # Software distortions correction for flux lines (example, modify as needed)
         # distortion_corrections = {
         #     f"q{i}:fl-cl0.baseband": SoftwareDistortionCorrection(

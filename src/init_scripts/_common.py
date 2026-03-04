@@ -76,6 +76,7 @@ from quantify_scheduler.instrument_coordinator.utility import search_settable_pa
 # ---------------------------------------------------------------------------
 from quantify.backends.types.common import (
     MixerCorrections, 
+    HardwareDescription,
     SoftwareDistortionCorrection, 
     HardwareDistortionCorrection, 
     ModulationFrequencies, 
@@ -83,9 +84,10 @@ from quantify.backends.types.common import (
     Connectivity,
 )
 from quantify_scheduler.backends.types.qblox import (
-    QbloxHardwareDescription, ClusterDescription, ClusterModuleDescription,
+    QbloxHardwareDescription, ClusterDescription, ClusterModuleDescription, QbloxHardwareOptions, QbloxMixerCorrections,
     QRMDescription, QCMDescription, QRMRFDescription, QCMRFDescription, QTMDescription
 )
+
 from quantify_scheduler.backends.qblox_backend import QbloxHardwareCompilationConfig
 
 # ---------------------------------------------------------------------------
