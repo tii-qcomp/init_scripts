@@ -70,10 +70,17 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(
         },
         input_att={},
         mixer_corrections={
-            f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections()
+            f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections(
+                dc_offset_i = 0.0,
+                dc_offset_q = 0.0,
+                amp_ratio = 1.0,
+                phase_error = 0.0,
+                auto_lo_cal= "off", #"on_lo_interm_freq_change",
+                auto_sideband_cal= "off", #"on_interm_freq_change"
+            ) 
             for (t1, t2) in [("res", "ro"), ("mw", "01")]
             for i in range(5)
-        },
+        }
         # Distortions correction for flux lines (example, modify as needed)
         # distortion_corrections = {
         #     f"q{i}:fl-cl0.baseband": QbloxHardwareDistortionCorrection(

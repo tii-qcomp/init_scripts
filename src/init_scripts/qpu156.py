@@ -75,8 +75,8 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
                 dc_offset_q = 0.0,
                 amp_ratio = 1.0,
                 phase_error = 0.0,
-                auto_lo_cal="on_lo_interm_freq_change",
-                auto_sideband_cal="on_interm_freq_change"
+                auto_lo_cal= "off", #"on_lo_interm_freq_change",
+                auto_sideband_cal= "off", #"on_interm_freq_change"
             ) 
             for (t1, t2) in [("res", "ro"), ("mw", "01")]
             for i in range(5)
