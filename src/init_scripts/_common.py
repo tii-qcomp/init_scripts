@@ -240,7 +240,7 @@ def setup_cluster(cluster_name: str, cluster_ip: str) -> Cluster:
 
 def setup_device(
     platform_name: str,
-    hw_config: dict = {},
+    hw_config: QbloxHardwareCompilationConfig = {},
     hw_config_path=None,
     meas_ctrl=None,
     nested_meas_ctrl=None,
@@ -280,10 +280,10 @@ def setup_device(
             raise FileNotFoundError(f"Hardware config file not found at {hw_config_path}")
         qd.hardware_config.load_from_json_file(hw_config_path)
     else:
-        qd.hardware_config(hw_config)
+        qd.hardware_config(hw_config = hw_config.model_dump(mode="json"))
 
-    hw_config_dict = hw_config if isinstance(hw_config, dict) else qd.hardware_config.model_dump(mode="json")
-    
+    qd.hardware_config()
+
     # Always persist config to disk
     if hw_config_path is None:
         hw_config_path = Path.cwd() / f"{platform_name}_hardware_config.json"
