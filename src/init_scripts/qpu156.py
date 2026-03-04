@@ -106,23 +106,16 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
 
 from init_scripts._common import (
     # stdlib
-    logging, time, os, Path, reload, suppress,
-    # numeric / visualization
-    np, plt, nx, display, SVG,
-    # instruments
-    Instrument, Cluster, qblox,
-    # quantify (quantify_core fallback handled in _common)
-    get_datadir, set_datadir, load_settings_onto_instrument,
-    quantify, quantify_scheduler,
-    InstrumentCoordinator, ClusterComponent, GenericInstrumentCoordinatorComponent,
-    search_settable_param,
-    # SCQT
+    logging, time, os, Path,
+    # numeric / visualization (exposed for user namespace)
+    np, plt,
+    # quantify
+    get_datadir, set_datadir,
+    quantify, quantify_scheduler, qblox,
+    # SCQT (exposed for user namespace)
     scqt, cal, meas, generate_calibration_graph,
-    QuantumDevice, BasicTransmonElement, TransmonElementPurcell,
-    TunableCouplerTransmonElement, FeedlineElement, SuddenNetZeroEdge,
     # OrangeQS / Juice
-    grace, MeasurementControl, InstrumentMonitorPublisher,
-    new_run_id, register_calibration_graph,
+    grace, InstrumentMonitorPublisher,
     # helpers
     setup_cluster, setup_device, setup_instrument_coordinator, setup_utilities,
     helper_configure_ladder, helper_defaults,
@@ -197,7 +190,7 @@ quantum_device.instr_nested_measurement_control(nested_meas_ctrl.name)
 qubits, edges, feedline = helper_configure_ladder(quantum_device, num_qubits=5)
 
 # Create a pointer like 'q#' for each qubit
-for i in range(len(qubits)): globals()[f'q{i}'] = qubits[i] 
+q0, q1, q2, q3, q4 = qubits
 
 helper_defaults(
     quantum_device,
