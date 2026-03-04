@@ -26,90 +26,92 @@ CLUSTER_IP    = "192.168.0.20"  # IP address of the cluster.
 PLATFORM_NAME = "qpu164"        # Used for the data directory and device config file name.
 LOAD_CFG_FILE = False            # Set True to load hardware config from the saved JSON file.
 
-HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(
-    config_type = "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
-    hardware_description = {
-        "cluster0": ClusterDescription(
-            instrument_type="Cluster",
-            ip=CLUSTER_IP,
-            ref="internal",
-            sequence_to_file=False,
-            modules={
-                "10": QCMRFDescription(),
-                "12": QCMRFDescription(),
-                "14": QCMRFDescription(),
-                "18": QRMRFDescription(),
-            },
-        )
-    },
-    hardware_options = QbloxHardwareOptions(
-        latency_corrections={
-            f"q{i}:mw-q{i}.01": 0e-9 for i in range(5)
+HARDWARE_CFG_TII = {
+    **QbloxHardwareCompilationConfig(
+        hardware_description = {
+            "cluster0": ClusterDescription(
+                instrument_type="Cluster",
+                ip=CLUSTER_IP,
+                ref="internal",
+                sequence_to_file=False,
+                modules={
+                    "10": QCMRFDescription(),
+                    "12": QCMRFDescription(),
+                    "14": QCMRFDescription(),
+                    "18": QRMRFDescription(),
+                },
+            )
         },
-        modulation_frequencies= {
-            # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
-            **{
-                f"q{i}:{tipo1}-q{i}.{tipo2}":
-                    ModulationFrequencies(lo_freq=7.029e9) if tipo1 == "res" and tipo2 == "ro" else
-                    ModulationFrequencies(lo_freq=4.75e9 + i * 0.3e9)
-                for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
+        hardware_options = QbloxHardwareOptions(
+            latency_corrections={
+                f"q{i}:mw-q{i}.01": 0e-9 for i in range(5)
+            },
+            modulation_frequencies= {
+                # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
+                **{
+                    f"q{i}:{tipo1}-q{i}.{tipo2}":
+                        ModulationFrequencies(lo_freq=7.029e9) if tipo1 == "res" and tipo2 == "ro" else
+                        ModulationFrequencies(lo_freq=4.75e9 + i * 0.3e9)
+                    for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
+                    for i in range(5)
+                },
+                "f0:in-f0.ro": ModulationFrequencies(lo_freq=7.029e9),
+            }, 
+            output_att={
+                "cluster0.module18.complex_output_0": OutputAttenuation(20),
+                "cluster0.module10.complex_output_0": OutputAttenuation(20),
+                "cluster0.module10.complex_output_1": OutputAttenuation(4),
+                "cluster0.module12.complex_output_0": OutputAttenuation(4),
+                "cluster0.module12.complex_output_1": OutputAttenuation(4),
+                "cluster0.module14.complex_output_1": OutputAttenuation(4),
+            },
+            input_gain={
+                "cluster0.module18.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0),
+            },
+            input_att={},
+            mixer_corrections={
+                f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections(
+                    dc_offset_i = 0.0,
+                    dc_offset_q = 0.0,
+                    amp_ratio = 1.0,
+                    phase_error = 0.0,
+                    auto_lo_cal= "off", #"on_lo_interm_freq_change",
+                    auto_sideband_cal= "off", #"on_interm_freq_change"
+                ) 
+                for (t1, t2) in [("res", "ro"), ("mw", "01")]
                 for i in range(5)
             },
-            "f0:in-f0.ro": ModulationFrequencies(lo_freq=7.029e9),
-        }, 
-        output_att={
-            "cluster0.module18.complex_output_0": OutputAttenuation(20),
-            "cluster0.module10.complex_output_0": OutputAttenuation(20),
-            "cluster0.module10.complex_output_1": OutputAttenuation(4),
-            "cluster0.module12.complex_output_0": OutputAttenuation(4),
-            "cluster0.module12.complex_output_1": OutputAttenuation(4),
-            "cluster0.module14.complex_output_1": OutputAttenuation(4),
-        },
-        input_gain={
-            "cluster0.module18.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0),
-        },
-        input_att={},
-        mixer_corrections={
-            f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections(
-                dc_offset_i = 0.0,
-                dc_offset_q = 0.0,
-                amp_ratio = 1.0,
-                phase_error = 0.0,
-                auto_lo_cal= "off", #"on_lo_interm_freq_change",
-                auto_sideband_cal= "off", #"on_interm_freq_change"
-            ) 
-            for (t1, t2) in [("res", "ro"), ("mw", "01")]
-            for i in range(5)
-        },
-        # Distortions correction for flux lines (example, modify as needed)
-        # distortion_corrections = {
-        #     f"q{i}:fl-cl0.baseband": QbloxHardwareDistortionCorrection(
-        #         filter_func="scipy.signal.lfilter",
-        #             input_var_name="x",
-        #             kwargs={
-        #                 "b": [0, 0.25, 0.5],
-        #                 "a": [1]
-        #             },
-        #             clipping_values=[-2.5, 2.5]
-        #         ) for i in range(5)
-        # },
-    ),
-    connectivity = Connectivity.model_validate(
-        {"graph": [
-            ("cluster0.module10.complex_output_0", "q0:mw"),
-            ("cluster0.module10.complex_output_1", "q1:mw"),
-            ("cluster0.module12.complex_output_0", "q2:mw"),
-            ("cluster0.module12.complex_output_1", "q3:mw"),
-            ("cluster0.module14.complex_output_1", "q4:mw"),
-            ("cluster0.module18.complex_output_0", "q0:res"),  # Probe TX path
-            ("cluster0.module18.complex_output_0", "q1:res"),
-            ("cluster0.module18.complex_output_0", "q2:res"),
-            ("cluster0.module18.complex_output_0", "q3:res"),
-            ("cluster0.module18.complex_output_0", "q4:res"),
-            ("cluster0.module18.complex_output_0", "f0:in"),   # matches old working script
-        ]}
+            # Distortions correction for flux lines (example, modify as needed)
+            # distortion_corrections = {
+            #     f"q{i}:fl-cl0.baseband": QbloxHardwareDistortionCorrection(
+            #         filter_func="scipy.signal.lfilter",
+            #             input_var_name="x",
+            #             kwargs={
+            #                 "b": [0, 0.25, 0.5],
+            #                 "a": [1]
+            #             },
+            #             clipping_values=[-2.5, 2.5]
+            #         ) for i in range(5)
+            # },
+        ),
+        connectivity = Connectivity.model_validate(
+            {"graph": [
+                ("cluster0.module10.complex_output_0", "q0:mw"),
+                ("cluster0.module10.complex_output_1", "q1:mw"),
+                ("cluster0.module12.complex_output_0", "q2:mw"),
+                ("cluster0.module12.complex_output_1", "q3:mw"),
+                ("cluster0.module14.complex_output_1", "q4:mw"),
+                ("cluster0.module18.complex_output_0", "q0:res"),  # Probe TX path
+                ("cluster0.module18.complex_output_0", "q1:res"),
+                ("cluster0.module18.complex_output_0", "q2:res"),
+                ("cluster0.module18.complex_output_0", "q3:res"),
+                ("cluster0.module18.complex_output_0", "q4:res"),
+                ("cluster0.module18.complex_output_0", "f0:in"),   # matches old working script
+            ]}
+        ).model_dump(),
     ).model_dump(),
-)
+    'config_type': "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
+}
 
 ############################################
 # 1. Imports

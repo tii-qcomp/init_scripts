@@ -284,6 +284,16 @@ def setup_device(
             raise FileNotFoundError(f"Hardware config file not found at {hw_config_path}")
         qd.hardware_config.load_from_json_file(hw_config_path)
     else:
+        # Normalise to plain dict (handles Pydantic models passed directly)
+        if hasattr(hw_config, "model_dump"):
+            hw_config = hw_config.model_dump(mode="json")
+        # Ensure config_type is present — model_dump() silently drops it but
+        # SCQT needs it to identify the Qblox backend when calling
+        # generate_hardware_config() internally.
+        if isinstance(hw_config, dict) and "config_type" not in hw_config:
+            hw_config["config_type"] = (
+                "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig"
+            )
         qd.hardware_config(hw_config)
 
     # Always persist config to disk
