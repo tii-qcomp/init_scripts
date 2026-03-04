@@ -101,8 +101,12 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(
             ("cluster0.module12.complex_output_0", "q2:mw"),
             ("cluster0.module12.complex_output_1", "q3:mw"),
             ("cluster0.module14.complex_output_1", "q4:mw"),
-            ("cluster0.module18.complex_input_0",  ["q0:res", "q1:res", "q2:res", "q3:res", "q4:res"]),  # Probe path
-            ("cluster0.module18.complex_output_0", "f0:in"),  # Feedback path
+            ("cluster0.module18.complex_output_0", "q0:res"),  # Probe TX path
+            ("cluster0.module18.complex_output_0", "q1:res"),
+            ("cluster0.module18.complex_output_0", "q2:res"),
+            ("cluster0.module18.complex_output_0", "q3:res"),
+            ("cluster0.module18.complex_output_0", "q4:res"),
+            ("cluster0.module18.complex_output_0", "f0:in"),   # matches old working script
         ]}
     ).model_dump(),
 )
