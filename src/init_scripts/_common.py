@@ -13,6 +13,7 @@ automatically if it is not installed.
 import logging
 import os
 import time
+import json
 from contextlib import suppress
 from importlib import reload
 from pathlib import Path
@@ -285,7 +286,10 @@ def setup_device(
     # Always persist config to disk
     if hw_config_path is None:
         hw_config_path = Path.cwd() / f"{platform_name}_hardware_config.json"
-    qd.hardware_config.model_dump(mode="json").write_to_json_file(hw_config_path)
+    hw_config_dict: dict = qd.generate_hardware_config()
+    
+    with open(hw_config_path, "w") as f:
+        json.dump(hw_config_dict, f, indent=4)
 
     qd.instr_measurement_control(meas_ctrl.name if meas_ctrl is not None else None)
     qd.instr_nested_measurement_control(
