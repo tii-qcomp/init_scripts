@@ -58,16 +58,16 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             "f0:in-f0.ro": ModulationFrequencies(lo_freq=7.26e9),
         }, 
         output_att={
-            "cluster0.module20.complex_output_0": OutputAttenuation(36),
-            "cluster0.module14.complex_output_1": OutputAttenuation(10),
-            "cluster0.module6.complex_output_0": OutputAttenuation(10),
-            "cluster0.module6.complex_output_1": OutputAttenuation(10),
-            "cluster0.module12.complex_output_0": OutputAttenuation(10),
-            "cluster0.module12.complex_output_1": OutputAttenuation(10),
+            "cluster0.module20.complex_output_0": 36,
+            "cluster0.module14.complex_output_1": 10,
+            "cluster0.module6.complex_output_0": 10,
+            "cluster0.module6.complex_output_1": 10,
+            "cluster0.module12.complex_output_0": 10,
+            "cluster0.module12.complex_output_1": 10,
         },
-        input_gain={
-            "cluster0.module20.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0),  # Gain in dB for the return signal
-        },
+        # input_gain={
+        #     "cluster0.module20.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0),  # Gain in dB for the return signal
+        # },
         input_att={},  # Populated at runtime by SCQT hardware options parameters
         mixer_corrections={
             f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections(
