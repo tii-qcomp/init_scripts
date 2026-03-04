@@ -276,17 +276,17 @@ def setup_device(
     if hw_config_path is not None:
         if isinstance(hw_config_path, str):
             hw_config_path = Path(hw_config_path)
+        if not hw_config_path.exists():
+            raise FileNotFoundError(f"Hardware config file not found at {hw_config_path}")
         qd.hardware_config.load_from_json_file(hw_config_path)
     else:
-        # Pydantic models must may be serialized to a plain dict before storing
-        # if hasattr(hw_config, "model_dump"):
-        #     hw_config = hw_config.model_dump(mode="json")
         qd.hardware_config(hw_config)
 
+    hw_config_dict = hw_config if isinstance(hw_config, dict) else qd.hardware_config.model_dump(mode="json")
+    
     # Always persist config to disk
     if hw_config_path is None:
         hw_config_path = Path.cwd() / f"{platform_name}_hardware_config.json"
-    hw_config_dict: dict = qd.generate_hardware_config()
     
     with open(hw_config_path, "w") as f:
         json.dump(hw_config_dict, f, indent=4)
