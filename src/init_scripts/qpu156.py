@@ -26,135 +26,88 @@ CLUSTER_IP = "192.168.0.2"     # IP address of the cluster. Change this if your 
 PLATFORM_NAME = "qpu156"        # This should be the same as the name used in the base_calibration notebook and the name used for the data directory. Consider changing this to a more descriptive name if you have multiple platforms.
 LOAD_CFG_FILE = False            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
 
-HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
-    config_type = "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
-    hardware_description = {
-        "cluster0": ClusterDescription(
-            instrument_type="Cluster",
-            ip = CLUSTER_IP,
-            ref="internal", # The reference source for the instrument.
-            sequence_to_file=False, # Write sequencer programs to files for (all modules in this) instrument.
-            modules={
-                "6": QCMRFDescription(),
-                "12": QCMRFDescription(),
-                "14": QCMRFDescription(),
-                "20": QRMRFDescription(),
-            }
-        )
-    },
-    hardware_options = QbloxHardwareOptions(
-        latency_corrections={
-            f"q{i}:mw-q{i}.01": 0e-9 for i in range(5)
+HARDWARE_CFG_TII = {
+    **QbloxHardwareCompilationConfig(
+        hardware_description = {
+            "cluster0": ClusterDescription(
+                instrument_type="Cluster",
+                ip = CLUSTER_IP,
+                ref="internal", # The reference source for the instrument.
+                sequence_to_file=False, # Write sequencer programs to files for (all modules in this) instrument.
+                modules={
+                    "6": QCMRFDescription(),
+                    "12": QCMRFDescription(),
+                    "14": QCMRFDescription(),
+                    "20": QRMRFDescription(),
+                }
+            )
         },
-        modulation_frequencies= {
-            # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
-            **{
-                f"q{i}:{tipo1}-q{i}.{tipo2}":
-                    ModulationFrequencies(lo_freq=7.26e9) if tipo1 == "res" and tipo2 == "ro" else
-                    ModulationFrequencies(lo_freq=3.9e9 + i * 0.2e9)
-                for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
-                for i in range(5)
+        hardware_options = QbloxHardwareOptions(
+            latency_corrections={
+                f"q{i}:mw-q{i}.01": 0e-9 for i in range(5)
             },
-            "f0:in-f0.ro": ModulationFrequencies(lo_freq=7.26e9),
-        }, 
-        output_att={
-            "cluster0.module20.complex_output_0": 36,
-            "cluster0.module14.complex_output_1": 10,
-            "cluster0.module6.complex_output_0": 10,
-            "cluster0.module6.complex_output_1": 10,
-            "cluster0.module12.complex_output_0": 10,
-            "cluster0.module12.complex_output_1": 10,
-        },
-        input_gain={
-            "cluster0.module20.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0),  # Gain in dB for the return signal
-        },
-        input_att={},  # Populated at runtime by SCQT hardware options parameters
-        mixer_corrections={
-            f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections(
-                dc_offset_i = 0.0,
-                dc_offset_q = 0.0,
-                amp_ratio = 1.0,
-                phase_error = 0.0,
-                auto_lo_cal= "off", #"on_lo_interm_freq_change",
-                auto_sideband_cal= "off", #"on_interm_freq_change"
-            ) 
-            for (t1, t2) in [("res", "ro"), ("mw", "01")]
-            for i in range(5)
-        }
-        # Distortions correction for flux lines (example, modify as needed)
-        # distortion_corrections = {
-        #     f"q{i}:fl-cl0.baseband": QbloxHardwareDistortionCorrection(
-        #         filter_func="scipy.signal.lfilter",
-        #             input_var_name="x",
-        #             kwargs={
-        #                 "b": [0, 0.25, 0.5],
-        #                 "a": [1]
-        #             },
-        #             clipping_values=[-2.5, 2.5]
-        #         ) for i in range(5)
-        # },
-    ),
-    connectivity = Connectivity.model_validate(
-        connectivity_dict := {"graph":[
-            ("cluster0.module14.complex_output_1", "q0:mw"),
-            ("cluster0.module6.complex_output_1", "q1:mw"),
-            ("cluster0.module6.complex_output_0", "q2:mw"),
-            ("cluster0.module12.complex_output_0", "q3:mw"),
-            ("cluster0.module12.complex_output_1", "q4:mw"),
-            ("cluster0.module20.complex_output_0", ["q0:res", "q1:res", "q2:res", "q3:res", "q4:res"]),  # Probe TX path
-            ("cluster0.module20.complex_output_0",  "f0:in"),   # Feedline RX path (on TX port)
-        ]}
-    ).model_dump()
-).model_dump(mode="json", exclude_unset=True)
-
-#Test dict
-# HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
-#     "config_type": "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
-#     "hardware_description": {
-#         "cluster0": {
-#             "instrument_type": "Cluster",
-#             "ref": "internal",
-#             "modules": {
-#                 "6": {"instrument_type": "QCM_RF"},
-#                 "12": {"instrument_type": "QCM_RF"},
-#                 "14": {"instrument_type": "QCM_RF"},
-#                 "20": {"instrument_type": "QRM_RF"},
-#             },
-#         },
-#     },
-#     "hardware_options": {
-#         "modulation_frequencies":{
-#             # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
-#             **{
-#                 f"q{i}:{tipo1}-q{i}.{tipo2}": {"lo_freq": 7.26e9 if tipo1 == "res" and tipo2 == "ro" else 3.9e9 + i*0.2e9} 
-#                 for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
-#                 for i in range(5) 
-#             },
-#             "f0:in-f0.ro": {"lo_freq": 7.26e9}
-#         }
-#     },
-#     "connectivity": {
-#         "graph": [
-#             # ["cluster0.module14.complex_output_0", "q0:mw"],
-#             ["cluster0.module14.complex_output_1", "q0:mw"],
-#             ["cluster0.module6.complex_output_1", "q1:mw"],
-#             ["cluster0.module6.complex_output_0", "q2:mw"],
-#             ["cluster0.module12.complex_output_0", "q3:mw"],
-#             ["cluster0.module12.complex_output_1", "q4:mw"],
-#             ["cluster0.module20.complex_output_0", "q0:res"],
-#             ["cluster0.module20.complex_output_0", "q1:res"],
-#             ["cluster0.module20.complex_output_0", "q2:res"],
-#             ["cluster0.module20.complex_output_0", "q3:res"],
-#             ["cluster0.module20.complex_output_0", "q4:res"],
-#             ["cluster0.module20.complex_output_0", "f0:in"],
-#         ]
-#     },
-# }
-
-
-
-
-
+            modulation_frequencies= {
+                # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
+                **{
+                    f"q{i}:{tipo1}-q{i}.{tipo2}":
+                        ModulationFrequencies(lo_freq=7.26e9) if tipo1 == "res" and tipo2 == "ro" else
+                        ModulationFrequencies(lo_freq=3.9e9 + i * 0.2e9)
+                    for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
+                    for i in range(5)
+                },
+                "f0:in-f0.ro": ModulationFrequencies(lo_freq=7.26e9),
+            }, 
+            output_att={
+                "cluster0.module20.complex_output_0": 36,
+                "cluster0.module14.complex_output_1": 10,
+                "cluster0.module6.complex_output_0": 10,
+                "cluster0.module6.complex_output_1": 10,
+                "cluster0.module12.complex_output_0": 10,
+                "cluster0.module12.complex_output_1": 10,
+            },
+            input_gain={
+                "cluster0.module20.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0),  # Gain in dB for the return signal
+            },
+            input_att={},  # Populated at runtime by SCQT hardware options parameters
+            mixer_corrections={
+                f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections(
+                    dc_offset_i = 0.0,
+                    dc_offset_q = 0.0,
+                    amp_ratio = 1.0,
+                    phase_error = 0.0,
+                    auto_lo_cal= "off", #"on_lo_interm_freq_change",
+                    auto_sideband_cal= "off", #"on_interm_freq_change"
+                ) 
+                for (t1, t2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
+                for i in range(5)
+            }
+            # Distortions correction for flux lines (example, modify as needed)
+            # distortion_corrections = {
+            #     f"q{i}:fl-cl0.baseband": QbloxHardwareDistortionCorrection(
+            #         filter_func="scipy.signal.lfilter",
+            #             input_var_name="x",
+            #             kwargs={
+            #                 "b": [0, 0.25, 0.5],
+            #                 "a": [1]
+            #             },
+            #             clipping_values=[-2.5, 2.5]
+            #         ) for i in range(5)
+            # },
+        ),
+        connectivity = Connectivity.model_validate(
+            connectivity_dict := {"graph":[
+                ("cluster0.module14.complex_output_1", "q0:mw"),
+                ("cluster0.module6.complex_output_1", "q1:mw"),
+                ("cluster0.module6.complex_output_0", "q2:mw"),
+                ("cluster0.module12.complex_output_0", "q3:mw"),
+                ("cluster0.module12.complex_output_1", "q4:mw"),
+                ("cluster0.module20.complex_output_0", ["q0:res", "q1:res", "q2:res", "q3:res", "q4:res"]),  # Probe TX path
+                ("cluster0.module20.complex_output_0",  "f0:in"),   # Feedline RX path (on TX port)
+            ]}
+        ).model_dump()
+    ).model_dump(),
+    'config_type' : "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig"
+}
 
 ############################################
 # 1. Imports
