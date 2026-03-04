@@ -2,11 +2,12 @@
 Initialization script for TII QPU156.
 
 Author: Juan Villegas, TII QRC
-Version: 1.0
-Date: 2026-02-26
+Version: 1.1
+Date: 2026-04-03
 
-This script sets up the hardware configuration, instrument connections, and quantum device representation for the TII QPU156. It defines the cluster configuration, including the instruments and their connectivity, and initializes the necessary components for calibration and control of the quantum device.
-
+This script sets up the hardware configuration, instrument connections, and quantum
+device representation for the TII QPU156. Platform-specific constants are defined at
+the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 """
 
 # Import pydantic models for hardware configuration
@@ -21,42 +22,45 @@ from init_scripts._common import (
     QRMDescription, QCMDescription, QRMRFDescription, QCMRFDescription, QTMDescription, 
 )
 
-from pydantic import ConfigDict
-
 CLUSTER_IP = "192.168.0.2"     # IP address of the cluster. Change this if your cluster has a different IP address.
 PLATFORM_NAME = "qpu156"        # This should be the same as the name used in the base_calibration notebook and the name used for the data directory. Consider changing this to a more descriptive name if you have multiple platforms.
 LOAD_CFG_FILE = False            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
 
-hw_description = ClusterDescription(
-            instrument_type="Cluster",
-            ip = CLUSTER_IP,
-            ref="internal", # The reference source for the instrument.
-            sequence_to_file=False, # Write sequencer programs to files for (all modules in this) instrument.
-            modules={
-                "6": QCMRFDescription(),
-                "12": QCMRFDescription(),
-                "14": QCMRFDescription(),
-                "20": QRMRFDescription(),
-            },
-        ),
-
 HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
     config_type =  "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
-    hardware_description = {"cluster0": hw_description},
+    hardware_description = {
+        "cluster0": 
+            ClusterDescription(
+                instrument_type="Cluster",
+                ip = CLUSTER_IP,
+                ref="internal", # The reference source for the instrument.
+                sequence_to_file=False, # Write sequencer programs to files for (all modules in this) instrument.
+                modules={
+                    "6": QCMRFDescription(),
+                    "12": QCMRFDescription(),
+                    "14": QCMRFDescription(),
+                    "20": QRMRFDescription(),
+                },
+            )
+        },
     hardware_options = QbloxHardwareOptions(
         latency_corrections={
             f"q{i}:mw-q{i}.01": 4e-9 for i in range(5)
         },
         modulation_frequencies= 
-            # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
-            {f"q{i}:{tipo1}-q{i}.{tipo2}": 
-                ModulationFrequencies(lo_freq = 7.26e9) if tipo1 == "res" and tipo2 == "ro" else 
-                ModulationFrequencies(lo_freq = 3.9e9 + i*0.2e9)
+        # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
+        {
+            **{
+            f"q{i}:{tipo1}-q{i}.{tipo2}":
+                ModulationFrequencies(lo_freq=7.26e9) if tipo1 == "res" and tipo2 == "ro" else
+                ModulationFrequencies(lo_freq=3.9e9 + i * 0.2e9)
             for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
-            for i in range(5) 
+            for i in range(5)
+            },
+            "f0:in-f0.ro": ModulationFrequencies(lo_freq=7.26e9),
         },
         output_att={
-            "cluster0.module20.complex_output_0": OutputAttenuation(36), 
+            "cluster0.module20.complex_output_0": OutputAttenuation(36),
             "cluster0.module14.complex_output_1": OutputAttenuation(10),
             "cluster0.module6.complex_output_0": OutputAttenuation(10),
             "cluster0.module6.complex_output_1": OutputAttenuation(10),
@@ -64,24 +68,16 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             "cluster0.module12.complex_output_1": OutputAttenuation(10),
         },
         input_gain={
-            "cluster0.module20.complex_input_0": ComplexInputGain(gain_I = 0, gain_Q = 0), # Gain in dB for the return signal
+            "cluster0.module20.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0),  # Gain in dB for the return signal
         },
+        input_att = None,
         mixer_corrections={
-             f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections().model_dump() for (t1, t2) in [("res", "ro"), ("mw", "01")]
+             f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections() for (t1, t2) in [("res", "ro"), ("mw", "01")]
              for i in range(5)
         },
-        model_config = ConfigDict(
-            extra="forbid",
-            # ensures exceptions are raised when passing extra argument that are not
-            # part of a model when initializing.
-            validate_assignment=True,
-            # run validation when assigning attributes
-            arbitrary_types_allowed=True,
-        ),
-        sequencer_options = None,
-        # Software distortions correction for flux lines (example, modify as needed)
+        # Distortions correction for flux lines (example, modify as needed)
         # distortion_corrections = {
-        #     f"q{i}:fl-cl0.baseband": SoftwareDistortionCorrection(
+        #     f"q{i}:fl-cl0.baseband": QbloxHardwareDistortionCorrection(
         #         filter_func="scipy.signal.lfilter",
         #             input_var_name="x",
         #             kwargs={
@@ -99,14 +95,11 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             ("cluster0.module6.complex_output_0", "q2:mw"),
             ("cluster0.module12.complex_output_0", "q3:mw"),
             ("cluster0.module12.complex_output_1", "q4:mw"),
-            # *[["cluster0.module20.complex_output_0", f"q{i}:res"] for i in range(5)],
             ("cluster0.module20.complex_input_0", ["q0:res", "q1:res","q2:res","q3:res","q4:res"]), # Probe path
             ("cluster0.module20.complex_output_0", "f0:in"), # Feedback path
         ]}
-    ),
+    ).model_dump(),
 )
-HARDWARE_CFG_TII["hardware_options"].modulation_frequencies["f0:in-f0.ro"] = {"lo_freq": 7.26e9}
-
 ############################################
 # 1. Imports
 ############################################

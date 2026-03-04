@@ -2,67 +2,98 @@
 Initialization script for TII QPU164.
 
 Author: Juan Villegas, TII QRC
-Version: 1.1
-Date: 2026-03-02
+Version: 1.0
+Date: 2026-04-03
 
 This script sets up the hardware configuration, instrument connections, and quantum
 device representation for the TII QPU164. Platform-specific constants are defined at
 the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 """
 
-CLUSTER_IP   = "192.168.0.20"   # IP address of the cluster.
-PLATFORM_NAME = "qpu164"         # Used for the data directory and device config file name.
-LOAD_CFG_FILE = True             # Set True to load hardware config from the saved JSON file.
+# Import pydantic models for hardware configuration
+from init_scripts._common import (
+    # pydantic models for hardware configuration
+    QbloxHardwareCompilationConfig,
+    ClusterSettings, AnalogModuleSettings, RFModuleSettings, Connectivity,
+    QbloxHardwareDescription, ClusterDescription, ClusterModuleDescription, QbloxHardwareOptions,
+    # pydantic models for parameters
+    ModulationFrequencies, QbloxHardwareDistortionCorrection, QbloxMixerCorrections, ComplexInputGain, InputAttenuation, OutputAttenuation,
+    # qblox module types
+    QRMDescription, QCMDescription, QRMRFDescription, QCMRFDescription, QTMDescription,
+)
 
-HARDWARE_CFG_TII = {
-    "config_type": "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
-    "hardware_description": {
-        "cluster0": {
-            "instrument_type": "Cluster",
-            "ref": "internal",
-            "modules": {
-                "10": {"instrument_type": "QCM_RF"},
-                "12": {"instrument_type": "QCM_RF"},
-                "14": {"instrument_type": "QCM_RF"},
-                "18": {"instrument_type": "QRM_RF"},
+CLUSTER_IP    = "192.168.0.20"  # IP address of the cluster.
+PLATFORM_NAME = "qpu164"        # Used for the data directory and device config file name.
+LOAD_CFG_FILE = True            # Set True to load hardware config from the saved JSON file.
+
+HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(
+    config_type = "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
+    hardware_description = {
+        "cluster0": ClusterDescription(
+            instrument_type="Cluster",
+            ip=CLUSTER_IP,
+            ref="internal",
+            sequence_to_file=False,
+            modules={
+                "10": QCMRFDescription(),
+                "12": QCMRFDescription(),
+                "14": QCMRFDescription(),
+                "18": QRMRFDescription(),
             },
+        )
+    },
+    hardware_options = QbloxHardwareOptions(
+        modulation_frequencies={
+            **{
+                f"q{i}:{tipo1}-q{i}.{tipo2}":
+                    ModulationFrequencies(lo_freq=7.029e9) if tipo1 == "res" and tipo2 == "ro" else
+                    ModulationFrequencies(lo_freq=4.75e9 + i * 0.3e9)
+                for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
+                for i in range(5)
+            },
+            "f0:in-f0.ro": ModulationFrequencies(lo_freq=7.029e9),
         },
-    },
-    "hardware_options": {
-        "modulation_frequencies": {
-            "q0:res-q0.ro": {"lo_freq": 7.029e9},
-            "q1:res-q1.ro": {"lo_freq": 7.029e9},
-            "q2:res-q2.ro": {"lo_freq": 7.029e9},
-            "q3:res-q3.ro": {"lo_freq": 7.029e9},
-            "q4:res-q4.ro": {"lo_freq": 7.029e9},
-            "q0:mw-q0.01":  {"lo_freq": 4.75e9},
-            "q0:mw-q0.12":  {"lo_freq": 4.75e9},
-            "q1:mw-q1.01":  {"lo_freq": 5.16e9},
-            "q1:mw-q1.12":  {"lo_freq": 5.16e9},
-            "q2:mw-q2.01":  {"lo_freq": 5.2e9},
-            "q2:mw-q2.12":  {"lo_freq": 5.2e9},
-            "q3:mw-q3.01":  {"lo_freq": 5.56e9},
-            "q3:mw-q3.12":  {"lo_freq": 5.56e9},
-            "q4:mw-q4.01":  {"lo_freq": 5.95e9},
-            "q4:mw-q4.12":  {"lo_freq": 5.95e9},
+        output_att={
+            "cluster0.module18.complex_output_0": OutputAttenuation(20),
+            "cluster0.module10.complex_output_0": OutputAttenuation(20),
+            "cluster0.module10.complex_output_1": OutputAttenuation(4),
+            "cluster0.module12.complex_output_0": OutputAttenuation(4),
+            "cluster0.module12.complex_output_1": OutputAttenuation(4),
+            "cluster0.module14.complex_output_1": OutputAttenuation(4),
         },
-    },
-    "connectivity": {
-        "graph": [
-            ["cluster0.module10.complex_output_0", "q0:mw"],
-            ["cluster0.module10.complex_output_1", "q1:mw"],
-            ["cluster0.module12.complex_output_0", "q2:mw"],
-            ["cluster0.module12.complex_output_1", "q3:mw"],
-            ["cluster0.module14.complex_output_1", "q4:mw"],
-            ["cluster0.module18.complex_output_0", "q0:res"],
-            ["cluster0.module18.complex_output_0", "q1:res"],
-            ["cluster0.module18.complex_output_0", "q2:res"],
-            ["cluster0.module18.complex_output_0", "q3:res"],
-            ["cluster0.module18.complex_output_0", "q4:res"],
-            ["cluster0.module18.complex_output_0", "f0:in"],
-        ]
-    },
-}
+        input_gain={
+            "cluster0.module18.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0),
+        },
+        mixer_corrections={
+            f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections()
+            for (t1, t2) in [("res", "ro"), ("mw", "01")]
+            for i in range(5)
+        },
+        # Distortions correction for flux lines (example, modify as needed)
+        # distortion_corrections = {
+        #     f"q{i}:fl-cl0.baseband": QbloxHardwareDistortionCorrection(
+        #         filter_func="scipy.signal.lfilter",
+        #             input_var_name="x",
+        #             kwargs={
+        #                 "b": [0, 0.25, 0.5],
+        #                 "a": [1]
+        #             },
+        #             clipping_values=[-2.5, 2.5]
+        #         ) for i in range(5)
+        # },
+    ),
+    connectivity = Connectivity.model_validate(
+        {"graph": [
+            ("cluster0.module10.complex_output_0", "q0:mw"),
+            ("cluster0.module10.complex_output_1", "q1:mw"),
+            ("cluster0.module12.complex_output_0", "q2:mw"),
+            ("cluster0.module12.complex_output_1", "q3:mw"),
+            ("cluster0.module14.complex_output_1", "q4:mw"),
+            ("cluster0.module18.complex_input_0",  ["q0:res", "q1:res", "q2:res", "q3:res", "q4:res"]),  # Probe path
+            ("cluster0.module18.complex_output_0", "f0:in"),  # Feedback path
+        ]}
+    ).model_dump(),
+)
 
 ############################################
 # 1. Imports
@@ -115,7 +146,8 @@ scqt_logger.setLevel(logging.INFO)
 platform_name = PLATFORM_NAME
 
 # -- Data directory --
-set_datadir(Path.home() / "nas_shared" / "Calibration" / platform_name)
+_cal_data_dir = Path(os.getenv("CAL_DATA_DIR", Path.home() / "nas_shared" / "Calibration")) / platform_name
+set_datadir(_cal_data_dir) # Set quantify data directory to the platform-specific calibration directory
 logger.info("Data directory set to: {}".format(get_datadir()))
 print("Data directory set to: {}".format(get_datadir()))
 
@@ -140,7 +172,7 @@ instrument_coordinator = setup_instrument_coordinator(clusters=[globals()[cluste
 meas_ctrl, nested_meas_ctrl = setup_utilities()
 
 # -- Quantum device --
-_hw_cfg_path = Path.home() / "nas_shared" / "device_configs" / f"{PLATFORM_NAME}_config.json"
+_hw_cfg_path = os.environ.get("HDW_CNFG_DIR", Path.home() / "nas_shared" / "device_configs") / f"{PLATFORM_NAME}_config.json"
 quantum_device = setup_device(
     platform_name=platform_name,
     hw_config=HARDWARE_CFG_TII,
@@ -150,8 +182,9 @@ quantum_device = setup_device(
     instrument_coordinator=instrument_coordinator,
 )
 
-# Save the hardware config to file if it doesn't exist or if loading from file is disabled
-quantum_device.hardware_config.write_to_json_file(_hw_cfg_path)
+# Save the hardware config to file if empty
+if not _hw_cfg_path.exists():
+    quantum_device.hardware_config.write_to_json_file(_hw_cfg_path)
 
 # -- Qubit elements --
 qubits, edges, feedline = helper_configure_ladder(quantum_device, num_qubits=5)

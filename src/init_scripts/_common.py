@@ -74,10 +74,7 @@ from quantify_scheduler.instrument_coordinator.utility import search_settable_pa
 # ---------------------------------------------------------------------------
 # Quantify Pydantic Types
 # ---------------------------------------------------------------------------
-from quantify.backends.types.common import (
-    MixerCorrections, 
-    HardwareDescription,
-    HardwareOptions,
+from quantify.backends.types.common import ( 
     Connectivity,
 )
 from quantify_scheduler.backends.types.qblox import (
@@ -87,7 +84,7 @@ from quantify_scheduler.backends.types.qblox import (
     QbloxHardwareDistortionCorrection, QbloxMixerCorrections, ComplexInputGain, InputAttenuation, OutputAttenuation 
 )
 from quantify_scheduler.backends.types.common import (
-    ModulationFrequencies 
+    ModulationFrequencies
 )
 
 from quantify_scheduler.backends.qblox_backend import QbloxHardwareCompilationConfig
@@ -95,33 +92,55 @@ from quantify_scheduler.backends.qblox_backend import QbloxHardwareCompilationCo
 # ---------------------------------------------------------------------------
 # SCQT
 # ---------------------------------------------------------------------------
-import superconducting_qubit_tools as scqt
-from superconducting_qubit_tools import calibration_functions as cal
-from superconducting_qubit_tools import measurement_functions as meas
-from superconducting_qubit_tools.automation.graph_generation import generate_calibration_graph
-from superconducting_qubit_tools.device_under_test.feedline_element import FeedlineElement
-from superconducting_qubit_tools.device_under_test.quantum_device import QuantumDevice
-from superconducting_qubit_tools.device_under_test.sudden_nz_edge import SuddenNetZeroEdge
-from superconducting_qubit_tools.device_under_test.transmon_element import (
-    BasicTransmonElement,
-    TransmonElementPurcell,
-)
-from superconducting_qubit_tools.device_under_test.tunable_coupler_transmon_element import (
-    TunableCouplerTransmonElement,
-)
+try: 
+    import superconducting_qubit_tools as scqt
+    from superconducting_qubit_tools import calibration_functions as cal
+    from superconducting_qubit_tools import measurement_functions as meas
+    from superconducting_qubit_tools.automation.graph_generation import generate_calibration_graph
+    from superconducting_qubit_tools.device_under_test.feedline_element import FeedlineElement
+    from superconducting_qubit_tools.device_under_test.quantum_device import QuantumDevice
+    from superconducting_qubit_tools.device_under_test.sudden_nz_edge import SuddenNetZeroEdge
+    from superconducting_qubit_tools.device_under_test.transmon_element import (
+        BasicTransmonElement,
+        TransmonElementPurcell,
+    )
+    from superconducting_qubit_tools.device_under_test.tunable_coupler_transmon_element import (
+        TunableCouplerTransmonElement,
+    )
+except ImportError:
+    import warnings
+    warnings.warn("superconducting_qubit_tools not found. SCQT-dependent helpers will raise ImportError when called.")
+    scqt = cal = meas = generate_calibration_graph = None
+    FeedlineElement = SuddenNetZeroEdge = None
+    BasicTransmonElement = TransmonElementPurcell = TunableCouplerTransmonElement = None
+    try:
+        from quantify.device_under_test.quantum_device import QuantumDevice
+    except ImportError:
+        QuantumDevice = None
+
+try:
+    import grace
+except ImportError:
+    import warnings
+    warnings.warn("grace not found. grace-dependent functionality will raise ImportError when called.")
+    grace = None
 
 # ---------------------------------------------------------------------------
 # OrangeQS / Juice
 # ---------------------------------------------------------------------------
-import grace
-from orangeqs.juice_ext.device_and_instruments import new_run_id
-from orangeqs.juice_ext.device_and_instruments.instrument_monitor import (
-    InstrumentMonitorPublisher,
-)
-from orangeqs.juice_ext.device_and_instruments.measurement_control.measurement_control import (
-    MeasurementControl,
-)
-from orangeqs.juice_ext.protocol_and_automation.graph import register_calibration_graph
+try:
+    from orangeqs.juice_ext.device_and_instruments import new_run_id
+    from orangeqs.juice_ext.device_and_instruments.instrument_monitor import (
+        InstrumentMonitorPublisher,
+    )
+    from orangeqs.juice_ext.device_and_instruments.measurement_control.measurement_control import (
+        MeasurementControl,
+    )
+    from orangeqs.juice_ext.protocol_and_automation.graph import register_calibration_graph
+except ImportError:
+    import warnings
+    warnings.warn("orangeqs.juice_ext not found. OrangeQS/Juice-dependent helpers will raise ImportError when called.")
+    new_run_id = InstrumentMonitorPublisher = MeasurementControl = register_calibration_graph = None
 
 
 # ---------------------------------------------------------------------------
@@ -160,13 +179,20 @@ def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
     return instrument_coordinator
 
 
-def setup_utilities() -> tuple[MeasurementControl, MeasurementControl]:
+def setup_utilities() -> tuple:
     """
     Return (or create) the MeasurementControl and nested MeasurementControl singletons.
 
     Returns:
         Tuple of ``(meas_ctrl, nested_meas_ctrl)``.
+
+    Raises:
+        ImportError: If ``orangeqs.juice_ext`` is not installed.
     """
+    if MeasurementControl is None:
+        raise ImportError(
+            "MeasurementControl is not available. Install orangeqs.juice_ext to use setup_utilities()."
+        )
     active_mc = MeasurementControl.instances()
     mc_names = [mc.name for mc in active_mc]
     if "meas_ctrl" in mc_names and "nested_meas_ctrl" in mc_names:
@@ -273,7 +299,7 @@ def setup_device(
 # ---------------------------------------------------------------------------
 
 def helper_configure_ladder(
-    qd: QuantumDevice, num_qubits: int = 5, feedline_name: str = "f0"
+    qd, num_qubits: int = 5, feedline_name: str = "f0"
 ):
     """
     Populate a :class:`QuantumDevice` with a 1-D ladder of transmon qubits sharing
@@ -290,7 +316,14 @@ def helper_configure_ladder(
 
     Returns:
         Tuple ``(qubits, edges, feedline)``.
+
+    Raises:
+        ImportError: If ``superconducting_qubit_tools`` is not installed.
     """
+    if BasicTransmonElement is None or SuddenNetZeroEdge is None or FeedlineElement is None:
+        raise ImportError(
+            "SCQT device elements are not available. Install superconducting_qubit_tools to use helper_configure_ladder()."
+        )
     qubits, edges = [], []
 
     for i in range(num_qubits):
