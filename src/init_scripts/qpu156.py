@@ -27,38 +27,36 @@ PLATFORM_NAME = "qpu156"        # This should be the same as the name used in th
 LOAD_CFG_FILE = False            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
 
 HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
-    config_type =  "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
+    config_type = "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
     hardware_description = {
-        "cluster0": 
-            ClusterDescription(
-                instrument_type="Cluster",
-                ip = CLUSTER_IP,
-                ref="internal", # The reference source for the instrument.
-                sequence_to_file=False, # Write sequencer programs to files for (all modules in this) instrument.
-                modules={
-                    "6": QCMRFDescription(),
-                    "12": QCMRFDescription(),
-                    "14": QCMRFDescription(),
-                    "20": QRMRFDescription(),
-                },
-            )
-        },
+        "cluster0": ClusterDescription(
+            instrument_type="Cluster",
+            ip = CLUSTER_IP,
+            ref="internal", # The reference source for the instrument.
+            sequence_to_file=False, # Write sequencer programs to files for (all modules in this) instrument.
+            modules={
+                "6": QCMRFDescription(),
+                "12": QCMRFDescription(),
+                "14": QCMRFDescription(),
+                "20": QRMRFDescription(),
+            },
+        )
+    },
     hardware_options = QbloxHardwareOptions(
         latency_corrections={
-            f"q{i}:mw-q{i}.01": 4e-9 for i in range(5)
+            f"q{i}:mw-q{i}.01": 0e-9 for i in range(5)
         },
-        modulation_frequencies= 
-        # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
-        {
+        modulation_frequencies= {
+            # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
             **{
-            f"q{i}:{tipo1}-q{i}.{tipo2}":
-                ModulationFrequencies(lo_freq=7.26e9) if tipo1 == "res" and tipo2 == "ro" else
-                ModulationFrequencies(lo_freq=3.9e9 + i * 0.2e9)
-            for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
-            for i in range(5)
+                f"q{i}:{tipo1}-q{i}.{tipo2}":
+                    ModulationFrequencies(lo_freq=7.26e9) if tipo1 == "res" and tipo2 == "ro" else
+                    ModulationFrequencies(lo_freq=3.9e9 + i * 0.2e9)
+                for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
+                for i in range(5)
             },
             "f0:in-f0.ro": ModulationFrequencies(lo_freq=7.26e9),
-        },
+        }, 
         output_att={
             "cluster0.module20.complex_output_0": OutputAttenuation(36),
             "cluster0.module14.complex_output_1": OutputAttenuation(10),
@@ -72,8 +70,9 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
         },
         input_att = None,
         mixer_corrections={
-             f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections() for (t1, t2) in [("res", "ro"), ("mw", "01")]
-             for i in range(5)
+            f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections() 
+            for (t1, t2) in [("res", "ro"), ("mw", "01")]
+            for i in range(5)
         },
         # Distortions correction for flux lines (example, modify as needed)
         # distortion_corrections = {
@@ -100,6 +99,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
         ]}
     ).model_dump(),
 )
+
 ############################################
 # 1. Imports
 ############################################
@@ -151,7 +151,8 @@ scqt_logger.setLevel(logging.INFO)
 platform_name = PLATFORM_NAME
 
 # -- Data directory --
-set_datadir(Path.home() / "nas_shared" / "Calibration" / platform_name)
+_cal_data_dir = Path(os.getenv("CAL_DATA_DIR", Path.home() / "shared" / "Calibration")) / platform_name
+set_datadir(_cal_data_dir)
 logger.info("Data directory set to: {}".format(get_datadir()))
 print("Data directory set to: {}".format(get_datadir()))
 
@@ -177,8 +178,7 @@ instrument_coordinator = setup_instrument_coordinator(clusters=[globals()[cluste
 meas_ctrl, nested_meas_ctrl = setup_utilities()
 
 # -- Quantum device --
-platform_name = PLATFORM_NAME
-_hw_cfg_path = Path.home() / "nas_shared" / "device_configs" / f"{PLATFORM_NAME}_config.json"
+_hw_cfg_path = Path(os.environ.get("HDW_CNFG_DIR", Path.home() / "shared" / "device_configs")) / f"{platform_name}_config.json"
 quantum_device = setup_device(
     platform_name=platform_name,
     hw_config=HARDWARE_CFG_TII,
@@ -187,10 +187,6 @@ quantum_device = setup_device(
     nested_meas_ctrl=nested_meas_ctrl,
     instrument_coordinator=instrument_coordinator,
 )
-
-quantum_device.instr_instrument_coordinator(instrument_coordinator.name)
-quantum_device.instr_measurement_control(meas_ctrl.name)
-quantum_device.instr_nested_measurement_control(nested_meas_ctrl.name)
 
 # -- Qubit elements --
 qubits, edges, feedline = helper_configure_ladder(quantum_device, num_qubits=5)

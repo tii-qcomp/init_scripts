@@ -164,7 +164,7 @@ def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
     ic_names = [ic.name for ic in active_ics]
     if "instrument_coordinator" in ic_names:
         ic = active_ics[ic_names.index("instrument_coordinator")]
-        if not all(cluster.name in ic.components for cluster in clusters):
+        if not all(cluster.name in ic.components() for cluster in clusters):
             raise RuntimeError(
                 "An InstrumentCoordinator named 'instrument_coordinator' already exists, but it does not contain all the required clusters."
             )

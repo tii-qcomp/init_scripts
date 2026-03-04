@@ -24,7 +24,7 @@ from init_scripts._common import (
 
 CLUSTER_IP    = "192.168.0.20"  # IP address of the cluster.
 PLATFORM_NAME = "qpu164"        # Used for the data directory and device config file name.
-LOAD_CFG_FILE = True            # Set True to load hardware config from the saved JSON file.
+LOAD_CFG_FILE = False            # Set True to load hardware config from the saved JSON file.
 
 HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(
     config_type = "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
@@ -43,7 +43,11 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(
         )
     },
     hardware_options = QbloxHardwareOptions(
-        modulation_frequencies={
+        latency_corrections={
+            f"q{i}:mw-q{i}.01": 0e-9 for i in range(5)
+        },
+        modulation_frequencies= {
+            # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
             **{
                 f"q{i}:{tipo1}-q{i}.{tipo2}":
                     ModulationFrequencies(lo_freq=7.029e9) if tipo1 == "res" and tipo2 == "ro" else
@@ -52,7 +56,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(
                 for i in range(5)
             },
             "f0:in-f0.ro": ModulationFrequencies(lo_freq=7.029e9),
-        },
+        }, 
         output_att={
             "cluster0.module18.complex_output_0": OutputAttenuation(20),
             "cluster0.module10.complex_output_0": OutputAttenuation(20),
@@ -64,6 +68,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(
         input_gain={
             "cluster0.module18.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0),
         },
+        input_att = None,
         mixer_corrections={
             f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections()
             for (t1, t2) in [("res", "ro"), ("mw", "01")]
@@ -101,7 +106,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(
 
 from init_scripts._common import (
     # stdlib
-    logging, time, Path, reload, suppress,
+    os, logging, time, Path, reload, suppress,
     # numeric / visualization
     np, plt, nx, display, SVG,
     # instruments
@@ -146,7 +151,7 @@ scqt_logger.setLevel(logging.INFO)
 platform_name = PLATFORM_NAME
 
 # -- Data directory --
-_cal_data_dir = Path(os.getenv("CAL_DATA_DIR", Path.home() / "nas_shared" / "Calibration")) / platform_name
+_cal_data_dir = Path(os.getenv("CAL_DATA_DIR", Path.home() / "shared" / "Calibration")) / platform_name
 set_datadir(_cal_data_dir) # Set quantify data directory to the platform-specific calibration directory
 logger.info("Data directory set to: {}".format(get_datadir()))
 print("Data directory set to: {}".format(get_datadir()))
@@ -172,7 +177,7 @@ instrument_coordinator = setup_instrument_coordinator(clusters=[globals()[cluste
 meas_ctrl, nested_meas_ctrl = setup_utilities()
 
 # -- Quantum device --
-_hw_cfg_path = os.environ.get("HDW_CNFG_DIR", Path.home() / "nas_shared" / "device_configs") / f"{PLATFORM_NAME}_config.json"
+_hw_cfg_path = Path(os.environ.get("HDW_CNFG_DIR", Path.home() / "shared" / "device_configs")) / f"{platform_name}_config.json"
 quantum_device = setup_device(
     platform_name=platform_name,
     hw_config=HARDWARE_CFG_TII,
@@ -181,10 +186,6 @@ quantum_device = setup_device(
     nested_meas_ctrl=nested_meas_ctrl,
     instrument_coordinator=instrument_coordinator,
 )
-
-# Save the hardware config to file if empty
-if not _hw_cfg_path.exists():
-    quantum_device.hardware_config.write_to_json_file(_hw_cfg_path)
 
 # -- Qubit elements --
 qubits, edges, feedline = helper_configure_ladder(quantum_device, num_qubits=5)
