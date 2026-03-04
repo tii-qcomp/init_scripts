@@ -284,7 +284,7 @@ def setup_device(
 
     # Always persist config to disk
     if hw_config_path is None:
-        hw_config_path = Path.cwd() / f"{platform_name}_hardware_config.json"
+        hw_config_path = Path(os.environ.get("HDW_CNFG_DIR", Path.cwd())) / f"{platform_name}_config.json"
     qd.hardware_config.write_to_json_file(hw_config_path)
 
     qd.instr_measurement_control(meas_ctrl.name if meas_ctrl is not None else None)
