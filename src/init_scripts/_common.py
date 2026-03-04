@@ -277,15 +277,15 @@ def setup_device(
             hw_config_path = Path(hw_config_path)
         qd.hardware_config.load_from_json_file(hw_config_path)
     else:
-        # Pydantic models must be serialized to a plain dict before storing
-        if hasattr(hw_config, "model_dump"):
-            hw_config = hw_config.model_dump(mode="json")
+        # Pydantic models must may be serialized to a plain dict before storing
+        # if hasattr(hw_config, "model_dump"):
+        #     hw_config = hw_config.model_dump(mode="json")
         qd.hardware_config(hw_config)
 
     # Always persist config to disk
     if hw_config_path is None:
         hw_config_path = Path.cwd() / f"{platform_name}_hardware_config.json"
-    qd.hardware_config.write_to_json_file(hw_config_path)
+    qd.hardware_config.model_dump(mode="json").write_to_json_file(hw_config_path)
 
     qd.instr_measurement_control(meas_ctrl.name if meas_ctrl is not None else None)
     qd.instr_nested_measurement_control(
