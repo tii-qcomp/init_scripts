@@ -173,7 +173,7 @@ def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
             return ic # Reuse existing instance
 
     instrument_coordinator = InstrumentCoordinator(
-        "instrument_coordinator", add_default_generic_icc=False
+        "instrument_coordinator"
     )
     for cluster in clusters:
         instrument_coordinator.add_component(ClusterComponent(cluster))
@@ -269,7 +269,7 @@ def setup_device(
     qd_names = [qd.name for qd in active_qd]
     if platform_name in qd_names:
         qd: QuantumDevice = active_qd[qd_names.index(platform_name)]
-        qd.close_all()
+        qd.close()
 
     qd = QuantumDevice(name=platform_name)
 
