@@ -48,7 +48,8 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
         modulation_frequencies= 
             # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
             {f"q{i}:{tipo1}-q{i}.{tipo2}": 
-                ModulationFrequencies(lo_freq = 7.26e9) if tipo1 == "res" and tipo2 == "ro" else ModulationFrequencies(lo_freq = 3.9e9 + i*0.2e9)
+                ModulationFrequencies(lo_freq = 7.26e9) if tipo1 == "res" and tipo2 == "ro" else 
+                ModulationFrequencies(lo_freq = 3.9e9 + i*0.2e9)
             for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
             for i in range(5) 
         },
