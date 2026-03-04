@@ -107,6 +107,55 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
     ).model_dump()
 )
 
+#Test dict
+HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
+    "config_type": "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
+    "hardware_description": {
+        "cluster0": {
+            "instrument_type": "Cluster",
+            "ref": "internal",
+            "modules": {
+                "6": {"instrument_type": "QCM_RF"},
+                "12": {"instrument_type": "QCM_RF"},
+                "14": {"instrument_type": "QCM_RF"},
+                "20": {"instrument_type": "QRM_RF"},
+            },
+        },
+    },
+    "hardware_options": {
+        "modulation_frequencies":{
+            # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
+            **{
+                f"q{i}:{tipo1}-q{i}.{tipo2}": {"lo_freq": 7.26e9 if tipo1 == "res" and tipo2 == "ro" else 3.9e9 + i*0.2e9} 
+                for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
+                for i in range(5) 
+            },
+            "f0:in-f0.ro": {"lo_freq": 7.26e9}
+        }
+    },
+    "connectivity": {
+        "graph": [
+            # ["cluster0.module14.complex_output_0", "q0:mw"],
+            ["cluster0.module14.complex_output_1", "q0:mw"],
+            ["cluster0.module6.complex_output_1", "q1:mw"],
+            ["cluster0.module6.complex_output_0", "q2:mw"],
+            ["cluster0.module12.complex_output_0", "q3:mw"],
+            ["cluster0.module12.complex_output_1", "q4:mw"],
+            ["cluster0.module20.complex_output_0", "q0:res"],
+            ["cluster0.module20.complex_output_0", "q1:res"],
+            ["cluster0.module20.complex_output_0", "q2:res"],
+            ["cluster0.module20.complex_output_0", "q3:res"],
+            ["cluster0.module20.complex_output_0", "q4:res"],
+            ["cluster0.module20.complex_output_0", "f0:in"],
+        ]
+    },
+}
+
+
+
+
+
+
 ############################################
 # 1. Imports
 ############################################
