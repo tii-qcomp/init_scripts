@@ -183,7 +183,8 @@ cluster_name = "cluster0"
 cluster0 = setup_cluster(cluster_name, CLUSTER_IP)
 
 # -- Hardware abstraction layer --
-instrument_coordinator = setup_instrument_coordinator(clusters=[cluster0])
+instrument_coordinator, ic_clusters = setup_instrument_coordinator(clusters=[cluster0])
+ic_cluster0 = ic_clusters[0]  # For direct access to cluster0's ClusterComponent
 
 # -- Utility instruments --
 meas_ctrl, nested_meas_ctrl = setup_utilities()

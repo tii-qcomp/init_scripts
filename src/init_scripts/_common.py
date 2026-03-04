@@ -174,9 +174,12 @@ def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
     instrument_coordinator = InstrumentCoordinator(
         "instrument_coordinator"
     )
+    ic_clusters = []
     for cluster in clusters:
-        instrument_coordinator.add_component(ClusterComponent(cluster))
-    return instrument_coordinator
+        globals()[f"ic_{cluster.name}"] = ClusterComponent(cluster)
+        ic_clusters.append(globals()[f"ic_{cluster.name}"])
+        instrument_coordinator.add_component(globals()[f"ic_{cluster.name}"])
+    return instrument_coordinator, ic_clusters
 
 
 def setup_utilities() -> tuple:
