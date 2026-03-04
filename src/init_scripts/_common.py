@@ -174,7 +174,8 @@ def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
                 return ic # Reuse existing instance
 
     instrument_coordinator = InstrumentCoordinator(
-        "instrument_coordinator"
+        "instrument_coordinator",
+        add_default_generic_icc=False,
     )
     ic_clusters = []
     for cluster in clusters:

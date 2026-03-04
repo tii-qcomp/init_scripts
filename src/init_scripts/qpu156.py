@@ -106,7 +106,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             ("cluster0.module20.complex_output_0", "q2:res"),
             ("cluster0.module20.complex_output_0", "q3:res"),
             ("cluster0.module20.complex_output_0", "q4:res"),
-            ("cluster0.module20.complex_input_0",  "f0:in"),   # Return RX path
+            ("cluster0.module20.complex_output_0",  "f0:in"),   # Feedline RX path (on TX port — required by SCQT)
         ]}
     ).model_dump(),
 )
