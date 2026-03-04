@@ -161,24 +161,26 @@ def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
         The configured :class:`~quantify_scheduler.instrument_coordinator.InstrumentCoordinator`.
     """
     active_ics = InstrumentCoordinator.instances()
-    ic_names = [ic.name for ic in active_ics]
-    if "instrument_coordinator" in ic_names:
-        ic = active_ics[ic_names.index("instrument_coordinator")]
-        if not all(cluster.name in ic.components() for cluster in clusters):
-            raise RuntimeError(
-                "An InstrumentCoordinator named 'instrument_coordinator' already exists, but it does not contain all the required clusters."
-            )
-        else:
-            return ic # Reuse existing instance
+    if len(active_ics) > 0:
+        print(f"Running IC: {active_ics}")
+        ic_names = [ic.name for ic in active_ics]
+        if "instrument_coordinator" in ic_names:
+            ic = active_ics[ic_names.index("instrument_coordinator")]
+            if not all(cluster.name in ic.components() for cluster in clusters):
+                raise RuntimeError(
+                    "An InstrumentCoordinator named 'instrument_coordinator' already exists, but it does not contain all the required clusters. This is not handled, please restrat your Kernel."
+                )
+            else:
+                return ic # Reuse existing instance
 
     instrument_coordinator = InstrumentCoordinator(
         "instrument_coordinator"
     )
     ic_clusters = []
     for cluster in clusters:
-        globals()[f"ic_{cluster.name}"] = ClusterComponent(cluster)
-        ic_clusters.append(globals()[f"ic_{cluster.name}"])
-        instrument_coordinator.add_component(globals()[f"ic_{cluster.name}"])
+        ic_cluster = ClusterComponent(cluster)
+        ic_clusters.append(ic_cluster)
+        instrument_coordinator.add_component(ic_cluster)
     return instrument_coordinator
 
 def setup_utilities() -> tuple:

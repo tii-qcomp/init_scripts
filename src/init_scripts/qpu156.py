@@ -184,7 +184,7 @@ cluster0 = setup_cluster(cluster_name, CLUSTER_IP)
 
 # -- Hardware abstraction layer --
 instrument_coordinator = setup_instrument_coordinator(clusters=[cluster0])
-ic_cluster0 = instrument_coordinator.get_component(cluster0.name)  # Direct access to cluster0's ClusterComponent
+ic_cluster0 = instrument_coordinator.get_component(f"ic_{cluster0.name}")  # Direct access to cluster0's ClusterComponent
 
 # -- Utility instruments --
 meas_ctrl, nested_meas_ctrl = setup_utilities()
