@@ -168,10 +168,10 @@ logger.info(f"Finished imports and configuration in {t1 - t0:.2f} s")
 
 # -- Physical instruments --
 cluster_name = "cluster0"
-globals()[cluster_name] = setup_cluster(cluster_name, CLUSTER_IP)
+cluster0 = setup_cluster(cluster_name, CLUSTER_IP)
 
 # -- Hardware abstraction layer --
-instrument_coordinator = setup_instrument_coordinator(clusters=[globals()[cluster_name]])
+instrument_coordinator = setup_instrument_coordinator(clusters=[cluster0])
 
 # -- Utility instruments --
 meas_ctrl, nested_meas_ctrl = setup_utilities()
