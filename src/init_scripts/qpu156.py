@@ -105,7 +105,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             ("cluster0.module20.complex_output_0",  "f0:in"),   # Feedline RX path (on TX port)
         ]}
     ).model_dump()
-)
+).model_dump(mode="json", exclude_unset=True)
 
 #Test dict
 HARDWARE_CFG_TII = {            # This is the hardware configuration for the TII QPU156. It defines the instruments, their types, and how they are connected. Modify this according to your actual hardware setup.
