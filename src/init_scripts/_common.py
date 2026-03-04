@@ -62,11 +62,10 @@ import quantify_scheduler
 # ---------------------------------------------------------------------------
 from quantify_scheduler.backends.qblox_backend import constants as qblox_constants
 qblox_constants.NUMBER_OF_QBLOX_ACQ_BINS = 2**16
-
+from quantify_scheduler.instrument_coordinator.components.qblox import ClusterComponent
 from quantify_scheduler.instrument_coordinator.components.generic import (
     GenericInstrumentCoordinatorComponent,
 )
-from quantify_scheduler.instrument_coordinator.components.qblox import ClusterComponent
 from quantify_scheduler.instrument_coordinator.instrument_coordinator import (
     InstrumentCoordinator,
 )
