@@ -81,9 +81,13 @@ from quantify.backends.types.common import (
     Connectivity,
 )
 from quantify_scheduler.backends.types.qblox import (
-    QbloxHardwareDescription, ClusterDescription, ClusterModuleDescription, QbloxHardwareOptions, QbloxMixerCorrections,
-    QRMDescription, QCMDescription, QRMRFDescription, QCMRFDescription, QTMDescription,
-    ModulationFrequencies, SoftwareDistortionCorrection, HardwareDistortionCorrection
+    ClusterSettings, AnalogModuleSettings, RFModuleSettings,
+    QbloxHardwareDescription, ClusterDescription, ClusterModuleDescription, QbloxHardwareOptions,
+    QRMDescription, QCMDescription, QRMRFDescription, QCMRFDescription, QTMDescription, 
+    QbloxHardwareDistortionCorrection, QbloxMixerCorrections, ComplexInputGain, InputAttenuation, OutputAttenuation 
+)
+from quantify_scheduler.backends.types.common import (
+    ModulationFrequencies 
 )
 
 from quantify_scheduler.backends.qblox_backend import QbloxHardwareCompilationConfig

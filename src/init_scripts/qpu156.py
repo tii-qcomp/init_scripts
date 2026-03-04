@@ -12,11 +12,13 @@ This script sets up the hardware configuration, instrument connections, and quan
 # Import pydantic models for hardware configuration
 from init_scripts._common import (
     # pydantic models for hardware configuration
-    QbloxHardwareCompilationConfig, QbloxHardwareDescription, ClusterDescription, QbloxHardwareOptions, Connectivity,
-    # pydantic models for settings 
-    ModulationFrequencies, QbloxMixerCorrections, SoftwareDistortionCorrection, HardwareDistortionCorrection,
+    QbloxHardwareCompilationConfig,
+    ClusterSettings, AnalogModuleSettings, RFModuleSettings, Connectivity,
+    QbloxHardwareDescription, ClusterDescription, ClusterModuleDescription, QbloxHardwareOptions,
+    # pydantic models for parameters 
+    ModulationFrequencies, QbloxHardwareDistortionCorrection, QbloxMixerCorrections,  ComplexInputGain, InputAttenuation, OutputAttenuation ,
     # qblox module types
-    ClusterModuleDescription, QCMDescription, QRMRFDescription, QCMRFDescription
+    QRMDescription, QCMDescription, QRMRFDescription, QCMRFDescription, QTMDescription, 
 )
 
 from pydantic import ConfigDict
@@ -54,15 +56,15 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             for i in range(5) 
         },
         output_att={
-            "cluster0.module20.complex_output_0": 36, 
-            "cluster0.module14.complex_output_1": 10,
-            "cluster0.module6.complex_output_0": 10,
-            "cluster0.module6.complex_output_1": 10,
-            "cluster0.module12.complex_output_0": 10,
-            "cluster0.module12.complex_output_1": 10,
+            "cluster0.module20.complex_output_0": OutputAttenuation(36), 
+            "cluster0.module14.complex_output_1": OutputAttenuation(10),
+            "cluster0.module6.complex_output_0": OutputAttenuation(10),
+            "cluster0.module6.complex_output_1": OutputAttenuation(10),
+            "cluster0.module12.complex_output_0": OutputAttenuation(10),
+            "cluster0.module12.complex_output_1": OutputAttenuation(10),
         },
         input_gain={
-            "cluster0.module20.complex_input_0": 0, # Gain in dB for the return signal
+            "cluster0.module20.complex_input_0": ComplexInputGain(0), # Gain in dB for the return signal
         },
         mixer_corrections={
              f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections().model_dump() for (t1, t2) in [("res", "ro"), ("mw", "01")]
