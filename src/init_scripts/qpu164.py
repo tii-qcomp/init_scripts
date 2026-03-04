@@ -80,7 +80,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(
             ) 
             for (t1, t2) in [("res", "ro"), ("mw", "01")]
             for i in range(5)
-        }
+        },
         # Distortions correction for flux lines (example, modify as needed)
         # distortion_corrections = {
         #     f"q{i}:fl-cl0.baseband": QbloxHardwareDistortionCorrection(
@@ -113,16 +113,23 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(
 
 from init_scripts._common import (
     # stdlib
-    logging, time, os, Path,
-    # numeric / visualization (exposed for user namespace)
+    os, logging, time, Path,
+    # numeric / visualization
     np, plt,
-    # quantify
-    get_datadir, set_datadir,
-    quantify, quantify_scheduler, qblox,
-    # SCQT (exposed for user namespace)
+    # instruments
+    Instrument, Cluster, qblox,
+    # quantify (quantify_core fallback handled in _common)
+    pqm, get_datadir, set_datadir, load_settings_onto_instrument, InstrumentMonitor,
+    quantify, quantify_scheduler,
+    InstrumentCoordinator, ClusterComponent, GenericInstrumentCoordinatorComponent,
+    search_settable_param,
+    # SCQT
     scqt, cal, meas, generate_calibration_graph,
+    QuantumDevice, BasicTransmonElement, TransmonElementPurcell,
+    TunableCouplerTransmonElement, FeedlineElement, SuddenNetZeroEdge,
     # OrangeQS / Juice
-    grace, InstrumentMonitorPublisher,
+    grace, MeasurementControl, InstrumentMonitorPublisher,
+    new_run_id, register_calibration_graph,
     # helpers
     setup_cluster, setup_device, setup_instrument_coordinator, setup_utilities,
     helper_configure_ladder, helper_defaults,
@@ -196,7 +203,8 @@ quantum_device.instr_nested_measurement_control(nested_meas_ctrl.name)
 qubits, edges, feedline = helper_configure_ladder(quantum_device, num_qubits=5)
 
 # Create a pointer like 'q#' for each qubit
-q0, q1, q2, q3, q4 = qubits
+for i in range(len(qubits)):
+    globals()[f"q{i}"] = qubits[i]
 
 helper_defaults(
     quantum_device,
