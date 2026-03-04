@@ -147,7 +147,7 @@ except ImportError:
 # Instrument setup helpers
 # ---------------------------------------------------------------------------
 
-def setup_instrument_coordinator(clusters: list) -> tuple[InstrumentCoordinator, list[ClusterComponent]]:
+def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
     """
     Return (or create) the singleton InstrumentCoordinator and attach cluster components.
 
@@ -179,8 +179,7 @@ def setup_instrument_coordinator(clusters: list) -> tuple[InstrumentCoordinator,
         globals()[f"ic_{cluster.name}"] = ClusterComponent(cluster)
         ic_clusters.append(globals()[f"ic_{cluster.name}"])
         instrument_coordinator.add_component(globals()[f"ic_{cluster.name}"])
-    return instrument_coordinator, ic_clusters
-
+    return instrument_coordinator
 
 def setup_utilities() -> tuple:
     """
