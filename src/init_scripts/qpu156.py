@@ -188,6 +188,11 @@ quantum_device = setup_device(
     instrument_coordinator=instrument_coordinator,
 )
 
+# Explicitly bind instruments — required by SCQT calibration routines
+quantum_device.instr_instrument_coordinator(instrument_coordinator.name)
+quantum_device.instr_measurement_control(meas_ctrl.name)
+quantum_device.instr_nested_measurement_control(nested_meas_ctrl.name)
+
 # -- Qubit elements --
 qubits, edges, feedline = helper_configure_ladder(quantum_device, num_qubits=5)
 
