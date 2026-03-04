@@ -183,8 +183,8 @@ cluster_name = "cluster0"
 cluster0 = setup_cluster(cluster_name, CLUSTER_IP)
 
 # -- Hardware abstraction layer --
-instrument_coordinator, ic_clusters = setup_instrument_coordinator(clusters=[cluster0])
-ic_cluster0 = ic_clusters[0]  # For direct access to cluster0's ClusterComponent
+instrument_coordinator = setup_instrument_coordinator(clusters=[cluster0])
+ic_cluster0 = instrument_coordinator.get_component(cluster0.name)  # Direct access to cluster0's ClusterComponent
 
 # -- Utility instruments --
 meas_ctrl, nested_meas_ctrl = setup_utilities()
@@ -209,7 +209,7 @@ quantum_device.instr_nested_measurement_control(nested_meas_ctrl.name)
 qubits, edges, feedline = helper_configure_ladder(quantum_device, num_qubits=5)
 
 # Create a pointer like 'q#' for each qubit
-for i in range(len(qubits)): globals()[f'q{i}'] = qubits[i] 
+q0, q1, q2, q3, q4 = qubits
 
 helper_defaults(
     quantum_device,
