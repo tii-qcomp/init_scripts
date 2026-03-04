@@ -68,7 +68,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
         input_gain={
             "cluster0.module20.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0),  # Gain in dB for the return signal
         },
-        input_att = None,
+        input_att={},  # Populated at runtime by SCQT hardware options parameters
         mixer_corrections={
             f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections() 
             for (t1, t2) in [("res", "ro"), ("mw", "01")]
