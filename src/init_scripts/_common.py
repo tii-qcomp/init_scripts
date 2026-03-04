@@ -241,8 +241,8 @@ def setup_cluster(cluster_name: str, cluster_ip: str) -> Cluster:
 def setup_device(
     platform_name: str,
     hw_config: QbloxHardwareCompilationConfig = {},
-    hw_config_path=None,
-    meas_ctrl=None,
+    hw_config_path= None,
+    meas_ctrl= None,
     nested_meas_ctrl=None,
     instrument_coordinator=None,
 ) -> QuantumDevice:
@@ -280,16 +280,12 @@ def setup_device(
             raise FileNotFoundError(f"Hardware config file not found at {hw_config_path}")
         qd.hardware_config.load_from_json_file(hw_config_path)
     else:
-        qd.hardware_config(hw_config = hw_config.model_dump(mode="json"))
-
-    qd.hardware_config()
+        qd.hardware_config(hw_config.model_dump(mode="json"))
 
     # Always persist config to disk
     if hw_config_path is None:
         hw_config_path = Path.cwd() / f"{platform_name}_hardware_config.json"
-    
-    with open(hw_config_path, "w") as f:
-        json.dump(hw_config_dict, f, indent=4)
+    qd.hardware_config.write_to_json_file(hw_config_path)
 
     qd.instr_measurement_control(meas_ctrl.name if meas_ctrl is not None else None)
     qd.instr_nested_measurement_control(
