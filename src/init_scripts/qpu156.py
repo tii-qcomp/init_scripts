@@ -94,19 +94,17 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
         #         ) for i in range(5)
         # },
     ),
-    connectivity = {"graph":[
-        ["cluster0.module14.complex_output_1", "q0:mw"],
-        ["cluster0.module6.complex_output_1", "q1:mw"],
-        ["cluster0.module6.complex_output_0", "q2:mw"],
-        ["cluster0.module12.complex_output_0", "q3:mw"],
-        ["cluster0.module12.complex_output_1", "q4:mw"],
-        ["cluster0.module20.complex_output_0", "q0:res"],  # Probe TX path
-        ["cluster0.module20.complex_output_0", "q1:res"],
-        ["cluster0.module20.complex_output_0", "q2:res"],
-        ["cluster0.module20.complex_output_0", "q3:res"],
-        ["cluster0.module20.complex_output_0", "q4:res"],
-        ["cluster0.module20.complex_output_0", "f0:in"],   # Feedline RX path (on TX port — required by SCQT)
-    ]}
+    connectivity = Connectivity.model_validate(
+        connectivity_dict := {"graph":[
+            ("cluster0.module14.complex_output_1", "q0:mw"),
+            ("cluster0.module6.complex_output_1", "q1:mw"),
+            ("cluster0.module6.complex_output_0", "q2:mw"),
+            ("cluster0.module12.complex_output_0", "q3:mw"),
+            ("cluster0.module12.complex_output_1", "q4:mw"),
+            ("cluster0.module20.complex_output_0", ["q0:res", "q1:res", "q2:res", "q3:res", "q4:res"]),  # Probe TX path
+            ("cluster0.module20.complex_output_0",  "f0:in"),   # Feedline RX path (on TX port)
+        ]}
+    ).model_dump()
 )
 
 ############################################

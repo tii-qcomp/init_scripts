@@ -284,7 +284,7 @@ def setup_device(
             raise FileNotFoundError(f"Hardware config file not found at {hw_config_path}")
         qd.hardware_config.load_from_json_file(hw_config_path)
     else:
-        qd.hardware_config(hw_config.model_dump(mode="json"))
+        qd.hardware_config(hw_config.model_dump(mode="json", exclude_unset=True))
 
     # Always persist config to disk
     if hw_config_path is None:
