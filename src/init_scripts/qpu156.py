@@ -64,7 +64,7 @@ HARDWARE_CFG_TII = QbloxHardwareCompilationConfig(            # This is the hard
             "cluster0.module12.complex_output_1": OutputAttenuation(10),
         },
         input_gain={
-            "cluster0.module20.complex_input_0": ComplexInputGain(0), # Gain in dB for the return signal
+            "cluster0.module20.complex_input_0": ComplexInputGain(gain_I = 0, gain_Q = 0), # Gain in dB for the return signal
         },
         mixer_corrections={
              f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections().model_dump() for (t1, t2) in [("res", "ro"), ("mw", "01")]
