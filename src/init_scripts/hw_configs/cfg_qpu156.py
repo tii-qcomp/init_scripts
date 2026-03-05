@@ -67,7 +67,7 @@ HW_CONFIG_DICT = {
                 },
             },
             input_gain={
-                "cluster0.module20.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0),  # Gain in dB for the return signal
+                f"cluster0.module{slot}.complex_input_0": ComplexInputGain(gain_I=0, gain_Q=0) for slot in probe_module
             },
             mixer_corrections={
                 f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections(
