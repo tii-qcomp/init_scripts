@@ -296,11 +296,6 @@ def setup_device(
             )
         qd.hardware_config(hw_config)
 
-    # Always persist config to disk
-    if hw_config_path is None:
-        hw_config_path = Path(os.environ.get("HDW_CNFG_DIR", Path.cwd())) / f"{platform_name}_config.json"
-    qd.hardware_config.write_to_json_file(hw_config_path)
-
     qd.instr_measurement_control(meas_ctrl.name if meas_ctrl is not None else None)
     qd.instr_nested_measurement_control(
         nested_meas_ctrl.name if nested_meas_ctrl is not None else None
@@ -349,7 +344,7 @@ def helper_configure_ladder(
 
     for i in range(num_qubits - 1):
         edge = SuddenNetZeroEdge(
-            child_element_name=f"q{i+1}", parent_element_name=f"q{i}"
+            child_element_name=f"q{i}", parent_element_name=f"q{i + 1}"
         )
         qd.add_edge(edge)
         edges.append(edge)

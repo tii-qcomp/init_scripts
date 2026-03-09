@@ -102,6 +102,10 @@ quantum_device = setup_device(
     instrument_coordinator=instrument_coordinator,
 )
 
+if not load_from_file:
+    # Persist config to disk when not loading from file, so that it can be loaded in the future.,
+    quantum_device.hardware_config.write_to_json_file(_hw_cfg_path)
+
 # Explicitly bind instruments — required by SCQT calibration routines
 quantum_device.instr_instrument_coordinator(instrument_coordinator.name)
 quantum_device.instr_measurement_control(meas_ctrl.name)
