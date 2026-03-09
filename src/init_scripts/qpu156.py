@@ -12,8 +12,8 @@ the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 
 CLUSTER_IP = "192.168.0.2"     # IP address of the cluster. Change this if your cluster has a different IP address.
 PLATFORM_NAME = "qpu156"        # This should be the same as the name used in the base_calibration notebook and the name used for the data directory. Consider changing this to a more descriptive name if you have multiple platforms.
-LOAD_CFG_FILE = False            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
-from init_scripts.hw_configs import HW_CFG_QPU156 as HW_CONFIG_DICT
+LOAD_CFG_FILE = True            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
+from init_scripts.hw_configs import HW_CONFIG_DICT
 
 
 ############################################

@@ -349,7 +349,7 @@ def helper_configure_ladder(
 
     for i in range(num_qubits - 1):
         edge = SuddenNetZeroEdge(
-            child_element_name=f"q{i}", parent_element_name=f"q{i + 1}"
+            child_element_name=f"q{i+1}", parent_element_name=f"q{i}"
         )
         qd.add_edge(edge)
         edges.append(edge)

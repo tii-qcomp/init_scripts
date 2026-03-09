@@ -12,8 +12,8 @@ the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 
 CLUSTER_IP    = "192.168.0.20"  # IP address of the cluster.
 PLATFORM_NAME = "qpu164"        # Used for the data directory and device config file name.
-LOAD_CFG_FILE = False            # Set True to load hardware config from the saved JSON file.
-from init_scripts.hw_configs import HW_CFG_QPU164 as HW_CONFIG_DICT
+LOAD_CFG_FILE = True            # Set True to load hardware config from the saved JSON file.
+from init_scripts.hw_configs import HW_CONFIG_DICT
 
 ############################################
 # 1. Imports
@@ -21,13 +21,13 @@ from init_scripts.hw_configs import HW_CFG_QPU164 as HW_CONFIG_DICT
 
 from init_scripts._common import (
     # stdlib
-    os, logging, time, Path,
+    logging, time, os, Path,
     # numeric / visualization
-    np, plt,
+    np, plt, 
     # instruments
     Instrument, Cluster, qblox,
     # quantify (quantify_core fallback handled in _common)
-    pqm, get_datadir, set_datadir, load_settings_onto_instrument, InstrumentMonitor,
+    get_datadir, set_datadir, load_settings_onto_instrument,
     quantify, quantify_scheduler,
     InstrumentCoordinator, ClusterComponent, GenericInstrumentCoordinatorComponent,
     search_settable_param,
@@ -116,8 +116,8 @@ for i in range(len(qubits)):
 
 helper_defaults(
     quantum_device,
-    clocks=[3.742469738e9, 3.926832821e9, 3.821841118e9, 4.0e9, 4.0e9],
-    readouts=[7.077309980e9, 7.166987526e9, 7.267621966e9, 7.382074503e9, 7.493387529e9],
+    clocks=[3.742469738e9, 3.926832821e9, 3.821841118e9, 4.074357e9, 4.328310e9],
+    readouts=[7.077309980e9, 7.166987526e9, 7.267621966e9, 7.384566e9, 7.492298e9],
 )
 
 # -- Calibration graph --
