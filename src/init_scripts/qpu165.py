@@ -1,5 +1,5 @@
 """
-Initialization script for TII QPU164.
+Initialization script for TII QPU165.
 
 Author: Juan Villegas, TII QRC
 Version: 1.0

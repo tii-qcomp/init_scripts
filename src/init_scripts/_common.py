@@ -232,6 +232,7 @@ def setup_cluster(cluster_name: str, cluster_ip: str) -> Cluster:
 
     cluster = Cluster(cluster_name, cluster_ip)
     logger.info(f"{cluster_name} connected: {cluster.get_system_status()}")
+    cluster.ext_trigger_input_trigger_address(1) # Typically unused but needs to be set to a valid value (1-15)
     for module in cluster.modules:
         for sequencer in module.sequencers:
             sequencer.nco_prop_delay_comp_en(True)
