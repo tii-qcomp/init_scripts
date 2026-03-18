@@ -17,6 +17,7 @@ import json
 from contextlib import suppress
 from importlib import reload
 from pathlib import Path
+from typing import Union
 from pydantic import BaseModel, Field
 
 
@@ -203,11 +204,12 @@ def setup_utilities() -> tuple:
     if "meas_ctrl" in mc_names and "nested_meas_ctrl" in mc_names:
         meas_ctrl = active_mc[mc_names.index("meas_ctrl")]
         nested_meas_ctrl = active_mc[mc_names.index("nested_meas_ctrl")]
-        return meas_ctrl, nested_meas_ctrl
-
-    meas_ctrl = MeasurementControl("meas_ctrl")
-    nested_meas_ctrl = MeasurementControl("nested_meas_ctrl")
-    meas_ctrl.attach_plotmon()
+        
+    else:
+        meas_ctrl = MeasurementControl("meas_ctrl")
+        nested_meas_ctrl = MeasurementControl("nested_meas_ctrl")
+        meas_ctrl.attach_plotmon()
+        
     return meas_ctrl, nested_meas_ctrl
 
 
@@ -245,8 +247,6 @@ def setup_cluster(cluster_name: str, cluster_ip: str) -> Cluster:
 
 def setup_device(
     platform_name: str,
-    hw_config: QbloxHardwareCompilationConfig = {},
-    hw_config_path= None,
     meas_ctrl= None,
     nested_meas_ctrl=None,
     instrument_coordinator=None,
@@ -256,12 +256,10 @@ def setup_device(
 
     If a device with the same *platform_name* is already registered it is closed first
     to avoid QCoDeS name conflicts when re-running the init script.
+    Hardware configuration is applied separately via :meth:`QuantumDevice.setup_config`.
 
     Args:
         platform_name:          Name used for the QCoDeS instrument and data directory.
-        hw_config:              Hardware configuration dict (used when *hw_config_path* is ``None``).
-        hw_config_path:         Path to an existing hardware configuration JSON file.
-                                When provided, the dict in *hw_config* is ignored.
         meas_ctrl:              :class:`MeasurementControl` instance to attach.
         nested_meas_ctrl:       Nested :class:`MeasurementControl` instance to attach.
         instrument_coordinator: :class:`InstrumentCoordinator` instance to attach.
@@ -278,13 +276,27 @@ def setup_device(
 
     qd = QuantumDevice(name=platform_name)
 
-    if hw_config_path is not None:
-        if isinstance(hw_config_path, str):
-            hw_config_path = Path(hw_config_path)
+    qd.instr_measurement_control(meas_ctrl.name if meas_ctrl is not None else None)
+    qd.instr_nested_measurement_control(
+        nested_meas_ctrl.name if nested_meas_ctrl is not None else None
+    )
+    qd.instr_instrument_coordinator(
+        instrument_coordinator.name if instrument_coordinator is not None else None
+    )
+    return qd
+
+def setup_config(self, hw_config: Union[QbloxHardwareCompilationConfig, dict, str, Path]) -> None:
+    """ Extended method for QuantumDevice to load hardware configuration from a dict or JSON file.
+        arguments:
+            hw_config:  Can be a QbloxHardwareCompilationConfig instance, a dict, or a path (str or Path)
+                        to a JSON file containing the hardware configuration.
+    """
+    if isinstance(hw_config, (str, Path)):
+        hw_config_path = Path(hw_config)
         if not hw_config_path.exists():
             raise FileNotFoundError(f"Hardware config file not found at {hw_config_path}")
-        qd.hardware_config.load_from_json_file(hw_config_path)
-    else:
+        self.hardware_config.load_from_json_file(hw_config_path)
+    elif isinstance(hw_config, dict) or isinstance(hw_config, QbloxHardwareCompilationConfig):
         # Normalise to plain dict (handles Pydantic models passed directly)
         if hasattr(hw_config, "model_dump"):
             hw_config = hw_config.model_dump(mode="json")
@@ -295,17 +307,10 @@ def setup_device(
             hw_config["config_type"] = (
                 "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig"
             )
-        qd.hardware_config(hw_config)
-
-    qd.instr_measurement_control(meas_ctrl.name if meas_ctrl is not None else None)
-    qd.instr_nested_measurement_control(
-        nested_meas_ctrl.name if nested_meas_ctrl is not None else None
-    )
-    qd.instr_instrument_coordinator(
-        instrument_coordinator.name if instrument_coordinator is not None else None
-    )
-    return qd
-
+        self.hardware_config(hw_config)
+    else:
+        raise ValueError("hw_config must be a dict, QbloxHardwareCompilationConfig, or path to a JSON file.")
+QuantumDevice.setup_config = setup_config
 
 # ---------------------------------------------------------------------------
 # Topology helpers

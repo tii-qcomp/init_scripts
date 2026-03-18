@@ -44,26 +44,31 @@ from init_scripts._common import (
 )
 
 ############################################
-# 2. Initialization function
+# 2. Utilities (created once, reused across initialize() calls)
+############################################
+
+cluster0 = setup_cluster("cluster0", CLUSTER_IP)
+instrument_coordinator = setup_instrument_coordinator(clusters=[cluster0])
+meas_ctrl, nested_meas_ctrl = setup_utilities()
+
+############################################
+# 3. Initialization function
 ############################################
 
 def initialize(
-    cluster_ip: str = CLUSTER_IP,
     platform_name: str = PLATFORM_NAME,
     load_cfg_file: bool = LOAD_CFG_FILE,
+    load_defaults: bool = True,
 ) -> QuantumDevice:
     """
     Initialize QPU165 and return the configured QuantumDevice.
 
-    Sets up the cluster, instrument coordinator, measurement controls, and
-    quantum device, then populates it with a 5-qubit ladder topology and
-    default clock frequencies.  Side effects:
-    - Connects to the physical cluster at *cluster_ip*.
-    - Sets the quantify data directory.
-    - Starts the InstrumentMonitorPublisher.
+    The cluster, instrument coordinator, and measurement controls are shared
+    module-level singletons created once on import.  Calling ``initialize()``
+    again safely recreates only the QuantumDevice (and its element tree) while
+    reusing those existing utilities.
 
     Args:
-        cluster_ip:    IP address of the Qblox cluster (default: ``CLUSTER_IP``).
         platform_name: Name used for the data directory and device
                        config file (default: ``PLATFORM_NAME``).
         load_cfg_file: When ``True`` the hardware config is loaded from the
@@ -98,28 +103,20 @@ def initialize(
     t1 = time.time()
     logger.info(f"Finished imports and configuration in {t1 - t0:.2f} s")
 
-    # -- Physical instruments --
-    cluster_name = "cluster0"
-    cluster0 = setup_cluster(cluster_name, cluster_ip)
-
-    # -- Hardware abstraction layer --
-    instrument_coordinator = setup_instrument_coordinator(clusters=[cluster0])
-
-    # -- Utility instruments --
-    meas_ctrl, nested_meas_ctrl = setup_utilities()
-
     # -- Quantum device --
-
-    # If load_cfg_file is True, the hardware config loads from the hardware config file in $HDW_CNFG_DIR
-    _hw_cfg_path = Path(os.environ.get("HDW_CNFG_DIR", Path.home() / "shared" / "device_configs")) / f"{platform_name}_config.json"
     quantum_device = setup_device(
         platform_name=platform_name,
-        hw_config=HW_CONFIG_DICT,
-        hw_config_path=_hw_cfg_path if (_hw_cfg_path.exists() and load_cfg_file) else None,
         meas_ctrl=meas_ctrl,
         nested_meas_ctrl=nested_meas_ctrl,
         instrument_coordinator=instrument_coordinator,
     )
+
+    # Setup Device Hardware Configuration
+    _hw_cfg_path = Path(os.environ.get("HDW_CNFG_DIR", Path.home() / "shared" / "device_configs")) / f"{platform_name}_config.json"
+    if load_cfg_file and _hw_cfg_path.is_file():
+        quantum_device.setup_config(_hw_cfg_path)
+    else:
+        quantum_device.setup_config(HW_CONFIG_DICT)
 
     # Explicitly bind instruments — required by SCQT calibration routines
     quantum_device.instr_instrument_coordinator(instrument_coordinator.name)
@@ -130,19 +127,12 @@ def initialize(
     helper_configure_ladder(quantum_device, num_qubits=5)
 
     # -- Initial values for qubit parameters, these should be loaded from snapshots after calibration
-    helper_defaults(
-        quantum_device,
-        clocks=[3.742469738e9, 3.926832821e9, 3.821841118e9, 4.074357e9, 4.328310e9],
-        readouts=[7.077309980e9, 7.166987526e9, 7.267621966e9, 7.384566e9, 7.492298e9],
-    )
-
-    # -- Calibration graph --
-    # graph = generate_calibration_graph(quantum_device)
-    # graph.set_all_node_states("needs calibration")
-
-    # When used as a service, generates unique run identifiers (not for interactive use):
-    # new_run_id()
-    # register_calibration_graph(graph)
+    if load_defaults:
+        helper_defaults(
+            quantum_device,
+            clocks=[3.742469738e9, 3.926832821e9, 3.821841118e9, 4.074357e9, 4.328310e9],
+            readouts=[7.077309980e9, 7.166987526e9, 7.267621966e9, 7.384566e9, 7.492298e9],
+        )
 
     # -- Instrument monitor --
     publisher = InstrumentMonitorPublisher()
@@ -150,13 +140,23 @@ def initialize(
 
     return quantum_device
 
-
 ############################################
 # 3. Script entry point
 ############################################
 
-if __name__ == "__main__":
-    quantum_device = initialize()
-    q0, q1, q2, q3, q4 = [quantum_device.get_element(f"q{i}") for i in range(5)]
+# Extend the QuantumDevice class with the initialize function, so that it can be called as QuantumDevice.initialize() to get a fully configured QuantumDevice instance.
+quantum_device = initialize()
+
+if __name__ == "__main__":    
+    qubits = [quantum_device.get_element(f"q{i}") for i in range(5)]
+    q0, q1, q2, q3, q4 = qubits
     f0 = quantum_device.get_element("f0")
-    qubits = [q0, q1, q2, q3, q4]
+
+    # -- Calibration graph --
+    graph = generate_calibration_graph(quantum_device)
+    graph.set_all_node_states("needs calibration")
+
+    # When used as a service, generates unique run identifiers (not for interactive use):
+    new_run_id()
+    register_calibration_graph(graph)
+    
