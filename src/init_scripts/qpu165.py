@@ -12,8 +12,8 @@ the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 
 CLUSTER_IP    = "192.168.0.20"  # IP address of the cluster.
 PLATFORM_NAME = "qpu165"        # Used for the data directory and device config file name.
-LOAD_CFG_FILE = False           # Set True to load hardware config from the saved JSON file.
-from init_scripts.hw_configs import HW_CONFIG_DICT
+LOAD_CFG_FILE = True           # Set True to load hardware config from the saved JSON file.
+from init_scripts.hw_configs.cfg_qpu165 import HW_CONFIG_DICT
 
 ############################################
 # 1. Imports
@@ -92,6 +92,8 @@ instrument_coordinator = setup_instrument_coordinator(clusters=[cluster0])
 meas_ctrl, nested_meas_ctrl = setup_utilities()
 
 # -- Quantum device --
+
+# If LOAD_CFG_FILE is set to True, the hardware config loads from the hardware config file in $HDW_CNFG_DIR
 _hw_cfg_path = Path(os.environ.get("HDW_CNFG_DIR", Path.home() / "shared" / "device_configs")) / f"{platform_name}_config.json"
 quantum_device = setup_device(
     platform_name=platform_name,
@@ -122,8 +124,8 @@ helper_defaults(
 )
 
 # -- Calibration graph --
-graph = generate_calibration_graph(quantum_device)
-graph.set_all_node_states("needs calibration")
+# graph = generate_calibration_graph(quantum_device)
+# graph.set_all_node_states("needs calibration")
 
 # When used as a service, generates unique run identifiers (not for interactive use):
 # new_run_id()
