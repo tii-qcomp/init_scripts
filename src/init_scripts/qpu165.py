@@ -146,13 +146,12 @@ def initialize(
 
 # Extend the QuantumDevice class with the initialize function, so that it can be called as QuantumDevice.initialize() to get a fully configured QuantumDevice instance.
 quantum_device = initialize()
+qubits = [quantum_device.get_element(f"q{i}") for i in range(5)]
+q0, q1, q2, q3, q4 = qubits
+f0 = quantum_device.get_element("f0")
 
 if __name__ == "__main__":    
-    qubits = [quantum_device.get_element(f"q{i}") for i in range(5)]
-    q0, q1, q2, q3, q4 = qubits
-    f0 = quantum_device.get_element("f0")
-
-    # -- Calibration graph --
+    # When run as a script, also generate the calibration graph and register it with OrangeQS.  This is not done in the initialize() function itself to avoid side effects when initialize() is called in an interactive context (e.g. Jupyter notebook).
     graph = generate_calibration_graph(quantum_device)
     graph.set_all_node_states("needs calibration")
 
