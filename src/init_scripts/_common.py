@@ -387,26 +387,44 @@ def helper_defaults(
                 readouts[i] if i < len(readouts) else 7e9 + i * 100e6
             )
 
+
+_calibration_file_handler = None
+_instrument_file_handler = None
+
+
 def setup_logging(platform: str):
-    handler = logging.FileHandler("calibration_logs.log")
-    handler_ic = logging.FileHandler("instrument_logs.log")
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    handler.setFormatter(formatter)
-    handler_ic.setFormatter(formatter)
+    global _calibration_file_handler, _instrument_file_handler
+
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+
+    if _calibration_file_handler is None:
+        _calibration_file_handler = logging.FileHandler("calibration_logs.log")
+        _calibration_file_handler.setFormatter(formatter)
+    handler = _calibration_file_handler
+
+    if _instrument_file_handler is None:
+        _instrument_file_handler = logging.FileHandler("instrument_logs.log")
+        _instrument_file_handler.setFormatter(formatter)
+    handler_ic = _instrument_file_handler
 
     logger = logging.getLogger(platform)
     logger.propagate = True
     logger.setLevel(logging.INFO)
-    logger.addHandler(handler)
+    if handler not in logger.handlers:
+        logger.addHandler(handler)
 
     scqt_logger = logging.getLogger("superconducting_qubit_tools")
     scqt_logger.setLevel(logging.INFO)
     scqt_logger.propagate = True
-    scqt_logger.addHandler(handler)
+    if handler not in scqt_logger.handlers:
+        scqt_logger.addHandler(handler)
     
     qs_logger = logging.getLogger("quantify_scheduler.instrument_coordinator.utility")
-    qs_logger.propagate = False # Prevent it from printing to console
+    qs_logger.propagate = False  # Prevent it from printing to console
     qs_logger.setLevel(logging.WARNING)
-    qs_logger.addHandler(handler_ic)
+    if handler_ic not in qs_logger.handlers:
+        qs_logger.addHandler(handler_ic)
 
     
