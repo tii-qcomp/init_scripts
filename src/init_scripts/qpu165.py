@@ -39,8 +39,8 @@ from init_scripts._common import (
     grace, MeasurementControl, InstrumentMonitorPublisher,
     new_run_id, register_calibration_graph,
     # helpers
-    setup_cluster, setup_device, setup_instrument_coordinator, setup_utilities,
-    helper_configure_ladder, helper_defaults,
+    setup_cluster, setup_device, setup_instrument_coordinator, setup_utilities, setup_logging,
+    helper_configure_ladder, helper_defaults, 
 )
 
 ############################################
@@ -90,9 +90,8 @@ def initialize(
     t0 = time.time()
 
     # -- Logging setup --
-    logger = logging.getLogger(__name__)
-    scqt_logger = logging.getLogger("superconducting_qubit_tools")
-    scqt_logger.setLevel(logging.INFO)
+    setup_logging(platform_name)
+    logger = logging.getLogger(platform_name)
 
     # -- Data directory --
     _cal_data_dir = Path(os.getenv("CAL_DATA_DIR", Path.home() / "shared" / "Calibration")) / platform_name
@@ -146,17 +145,18 @@ def initialize(
 
 # Extend the QuantumDevice class with the initialize function, so that it can be called as QuantumDevice.initialize() to get a fully configured QuantumDevice instance.
 quantum_device = initialize()
+qubits = [quantum_device.get_element(f"q{i}") for i in range(5)]
+q0, q1, q2, q3, q4 = qubits
+f0 = quantum_device.get_element("f0")
 
-if __name__ == "__main__":    
-    qubits = [quantum_device.get_element(f"q{i}") for i in range(5)]
-    q0, q1, q2, q3, q4 = qubits
-    f0 = quantum_device.get_element("f0")
-
+def start_grace(quantum_device):
     # -- Calibration graph --
-    graph = generate_calibration_graph(quantum_device)
+    graph = generate_calibration_graph(quantum_device = quantum_device)
     graph.set_all_node_states("needs calibration")
 
     # When used as a service, generates unique run identifiers (not for interactive use):
     new_run_id()
     register_calibration_graph(graph)
     
+if __name__ == "__main__":    
+    pass

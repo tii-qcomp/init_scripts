@@ -386,3 +386,27 @@ def helper_defaults(
             qobj.clock_freqs.readout(
                 readouts[i] if i < len(readouts) else 7e9 + i * 100e6
             )
+
+def setup_logging(platform: str):
+    handler = logging.FileHandler("calibration_logs.log")
+    handler_ic = logging.FileHandler("instrument_logs.log")
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    handler_ic.setFormatter(formatter)
+
+    logger = logging.getLogger(platform)
+    logger.propagate = True
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+
+    scqt_logger = logging.getLogger("superconducting_qubit_tools")
+    scqt_logger.setLevel(logging.INFO)
+    scqt_logger.propagate = True
+    scqt_logger.addHandler(handler)
+    
+    qs_logger = logging.getLogger("quantify_scheduler.instrument_coordinator.utility")
+    qs_logger.propagate = False # Prevent it from printing to console
+    qs_logger.setLevel(logging.WARNING)
+    qs_logger.addHandler(handler_ic)
+
+    
