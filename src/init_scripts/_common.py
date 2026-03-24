@@ -393,6 +393,18 @@ _instrument_file_handler = None
 
 
 def setup_logging(platform: str):
+    """
+    Configure file-based logging for calibration and instrument messages.
+
+    This helper attaches file handlers to several loggers:
+
+    * ``calibration_logs.log`` records INFO-and-above messages from the
+      logger named by *platform* and from ``superconducting_qubit_tools``,
+      both with propagation enabled.
+    * ``instrument_logs.log`` records WARNING-and-above messages from
+      ``quantify_scheduler.instrument_coordinator.utility`` only, with
+      propagation disabled to avoid duplicate console output.
+    """
     global _calibration_file_handler, _instrument_file_handler
 
     formatter = logging.Formatter(
