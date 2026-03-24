@@ -159,4 +159,4 @@ def start_grace(quantum_device):
     register_calibration_graph(graph)
     
 if __name__ == "__main__":    
-    pass
+    start_grace(quantum_device)
