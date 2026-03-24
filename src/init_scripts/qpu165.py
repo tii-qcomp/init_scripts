@@ -158,5 +158,5 @@ def start_grace(quantum_device):
     new_run_id()
     register_calibration_graph(graph)
     
-if __name__ == "__main__":    
+if __name__ == "__main__":
     start_grace(quantum_device)
