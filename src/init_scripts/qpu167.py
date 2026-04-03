@@ -139,6 +139,7 @@ def initialize(
 
     return quantum_device
 
+
 ############################################
 # 3. Script entry point
 ############################################
