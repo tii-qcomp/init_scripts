@@ -439,4 +439,25 @@ def setup_logging(platform: str):
     if handler_ic not in qs_logger.handlers:
         qs_logger.addHandler(handler_ic)
 
-    
+# ---------------------------------------------------------------------------
+# Patches
+# ---------------------------------------------------------------------------
+
+from quantify_scheduler.yaml_utils import YAMLSerializable
+from quantify_scheduler import yaml_utils
+from ruamel.yaml import YAML
+
+#Patch `to_yaml_file` with new quantify get_datadir and ruamel reset with representers
+def patched_to_yaml_file(self, path: str | Path | None = None, add_timestamp: bool = True) -> str:
+    yaml_utils.yaml = YAML(typ="rt")
+    yaml_utils.yaml.representer.add_multi_representer(np.floating, lambda r, d: r.represent_float(float(d)))
+    yaml_utils.yaml.representer.add_multi_representer(np.integer,  lambda r, d: r.represent_int(int(d)))
+    yaml_utils.yaml.representer.add_multi_representer(np.ndarray,  lambda r, d: r.represent_list(d.tolist()))
+    # Handle the default path logic
+    if path is None:
+        path = get_datadir() 
+    if isinstance(path, Path):
+        path = str(path)
+    return YAMLSerializable.to_yaml_file(self, path=path, add_timestamp=add_timestamp)
+QuantumDevice.to_yaml_file = patched_to_yaml_file
+

@@ -12,7 +12,7 @@ the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 
 CLUSTER_IP = "192.168.0.2"     # IP address of the cluster. Change this if your cluster has a different IP address.
 PLATFORM_NAME = "qpu156"        # This should be the same as the name used in the base_calibration notebook and the name used for the data directory. Consider changing this to a more descriptive name if you have multiple platforms.
-LOAD_CFG_FILE = True            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
+LOAD_CFG_FILE = False            # Set to True to load hardware configuration from file, False to use the HARDWARE_CFG_TII dict defined below
 from init_scripts.hw_configs.cfg_qpu156 import HW_CONFIG_DICT
 
 
@@ -22,7 +22,7 @@ from init_scripts.hw_configs.cfg_qpu156 import HW_CONFIG_DICT
 
 from init_scripts._common import (
     # stdlib
-    logging, time, os, Path,
+    logging, time, os, Path, setup_logging,
     # numeric / visualization
     np, plt, 
     # instruments
@@ -44,99 +44,124 @@ from init_scripts._common import (
     helper_configure_ladder, helper_defaults,
 )
 
-# -- Version checks --
-print(f"scqt version            : {scqt.__version__}")
-print(f"grace version           : {grace.__version__}")
-print(f"quantify version        : {quantify.__version__}")
-print(f"quantify-scheduler ver  : {quantify_scheduler.__version__}")
-print(f"qblox-instruments ver   : {qblox.__version__}")
-
-# Benchmarking start
-t0 = time.time()
-
 ############################################
-# 2. Configuration
+# 2. Initialization function
 ############################################
 
-# -- Logging setup --
-logger = logging.getLogger(__name__)
-scqt_logger = logging.getLogger("superconducting_qubit_tools")
-scqt_logger.setLevel(logging.INFO)
+def initialize(
+    platform_name: str = PLATFORM_NAME,
+    load_cfg_file: bool = LOAD_CFG_FILE,
+    load_defaults: bool = False,
+) -> QuantumDevice:
+    """
+    Initialize QPU156 and return the configured QuantumDevice.
 
-# -- Platform identity --
-platform_name = PLATFORM_NAME
+    The cluster, instrument coordinator, and measurement controls are shared
+    module-level singletons created once on import.  Calling ``initialize()``
+    again safely recreates only the QuantumDevice (and its element tree) while
+    reusing those existing utilities.
 
-# -- Data directory --
-_cal_data_dir = Path(os.getenv("CAL_DATA_DIR", Path.home() / "shared" / "Calibration")) / platform_name
-set_datadir(_cal_data_dir)
-logger.info("Data directory set to: {}".format(get_datadir()))
-print("Data directory set to: {}".format(get_datadir()))
+    Args:
+        platform_name: Name used for the data directory and device
+                       config file (default: ``PLATFORM_NAME``).
+        load_cfg_file: When ``True`` the hardware config is loaded from the
+                       JSON file in ``$HDW_CNFG_DIR`` if it exists
+                       (default: ``LOAD_CFG_FILE``).
 
-# -- Load-from-file flag --
-load_from_file = LOAD_CFG_FILE if 'LOAD_CFG_FILE' in globals() else False
+    Returns:
+        The fully configured :class:`QuantumDevice`.  Qubit elements are
+        accessible via ``quantum_device.get_element("q0")`` etc.
+    """
+    # -- Version checks --
+    print(f"scqt version            : {scqt.__version__}")
+    print(f"grace version           : {grace.__version__}")
+    print(f"quantify version        : {quantify.__version__}")
+    print(f"quantify-scheduler ver  : {quantify_scheduler.__version__}")
+    print(f"qblox-instruments ver   : {qblox.__version__}")
 
-# -- Hardware configuration --
-t1 = time.time()
-logger.info(f"Finished imports and configuration in {t1 - t0:.2f} s")
+    # Benchmarking start
+    t0 = time.time()
+
+    # -- Logging setup --
+    setup_logging(platform_name)
+    logger = logging.getLogger(platform_name)
+
+    # -- Data directory --
+    _cal_data_dir = Path(os.getenv("CAL_DATA_DIR", Path.home() / "shared" / "Calibration")) / platform_name
+    set_datadir(_cal_data_dir)  # Set quantify data directory to the platform-specific calibration directory
+    logger.info("Data directory set to: {}".format(get_datadir()))
+    print("Data directory set to: {}".format(get_datadir()))
+
+    t1 = time.time()
+    logger.info(f"Finished imports and configuration in {t1 - t0:.2f} s")
+
+    # -- Quantum device --
+    quantum_device = setup_device(
+        platform_name=platform_name,
+        meas_ctrl=meas_ctrl,
+        nested_meas_ctrl=nested_meas_ctrl,
+        instrument_coordinator=instrument_coordinator,
+    )
+
+    # Setup Device Hardware Configuration
+    _hw_cfg_path = Path(os.environ.get("HDW_CNFG_DIR", Path.home() / "shared" / "device_configs")) / f"{platform_name}_config.json"
+    if load_cfg_file and _hw_cfg_path.is_file():
+        quantum_device.setup_config(_hw_cfg_path)
+    else:
+        quantum_device.setup_config(HW_CONFIG_DICT)
+
+    # Explicitly bind instruments — required by SCQT calibration routines
+    quantum_device.instr_instrument_coordinator(instrument_coordinator.name)
+    quantum_device.instr_measurement_control(meas_ctrl.name)
+    quantum_device.instr_nested_measurement_control(nested_meas_ctrl.name)
+
+    # -- Qubit elements --
+    helper_configure_ladder(quantum_device, num_qubits=5)
+
+    # -- Initial values for qubit parameters, these should be loaded from snapshots after calibration
+    if load_defaults:
+        helper_defaults(
+            quantum_device,
+            clocks=[3.742469738e9, 3.926832821e9, 3.821841118e9, 4.074357e9, 4.328310e9],
+            readouts=[7.077309980e9, 7.166987526e9, 7.267621966e9, 7.384566e9, 7.492298e9],
+        )
+
+    # -- Instrument monitor --
+    publisher = InstrumentMonitorPublisher()
+    publisher.start()
+
+    return quantum_device
 
 ############################################
-# 3. Instantiation
+# 3. Calibration Graph (Using Default from SCQT)
 ############################################
 
-# -- Physical instruments --
-cluster_name = "cluster0"
-cluster0 = setup_cluster(cluster_name, CLUSTER_IP)
+def start_grace(quantum_device):
+    # -- Calibration graph --
+    graph = generate_calibration_graph(quantum_device = quantum_device)
+    graph.set_all_node_states("needs calibration")
 
-# -- Hardware abstraction layer --
+    # When used as a service, generates unique run identifiers (not for interactive use):
+    new_run_id()
+    register_calibration_graph(graph)
+    return graph
+QuantumDevice.initialize = initialize 
+
+############################################
+# 4. Script entry point
+############################################
+
+# 4.1 Setup utilities first
+cluster0 = setup_cluster("cluster0", CLUSTER_IP)
 instrument_coordinator = setup_instrument_coordinator(clusters=[cluster0])
-ic_cluster0 = instrument_coordinator.get_component(f"ic_{cluster0.name}")  # Direct access to cluster0's ClusterComponent
-
-# -- Utility instruments --
 meas_ctrl, nested_meas_ctrl = setup_utilities()
 
-# -- Quantum device --
-_hw_cfg_path = Path(os.environ.get("HDW_CNFG_DIR", Path.home() / "shared" / "device_configs")) / f"{platform_name}_config.json"
-quantum_device = setup_device(
-    platform_name=platform_name,
-    hw_config=HW_CONFIG_DICT,
-    hw_config_path=_hw_cfg_path if (_hw_cfg_path.exists() and load_from_file) else None,
-    meas_ctrl=meas_ctrl,
-    nested_meas_ctrl=nested_meas_ctrl,
-    instrument_coordinator=instrument_coordinator,
-)
+# 4.2 Then initialize the instrument
 
-if not load_from_file:
-    # Persist config to disk when not loading from file, so that it can be loaded in the future.,
-    quantum_device.hardware_config.write_to_json_file(_hw_cfg_path)
-
-# Explicitly bind instruments — required by SCQT calibration routines
-quantum_device.instr_instrument_coordinator(instrument_coordinator.name)
-quantum_device.instr_measurement_control(meas_ctrl.name)
-quantum_device.instr_nested_measurement_control(nested_meas_ctrl.name)
-
-# -- Qubit elements --
-qubits, edges, feedline = helper_configure_ladder(quantum_device, num_qubits=5)
-
-# Create a pointer like 'q#' for each qubit
+quantum_device = initialize()
+qubits = [quantum_device.get_element(f"q{i}") for i in range(5)]
 q0, q1, q2, q3, q4 = qubits
+f0 = quantum_device.get_element("f0")
 
-helper_defaults(
-    quantum_device,
-    clocks=[3.9090e9, 4.1294e9, 4.1875e9, 4.6042e9, 4.7887e9],
-    readouts=[7.078e9, 7.1878e9, 7.2941e9, 7.3841e9, 7.4987e9],
-)
-
-# -- Calibration graph --
-
-graph = generate_calibration_graph(quantum_device)
-graph.set_all_node_states("needs calibration")
-
-# When a service is being generated this can be used to generate unique identifiers for it
-# (Not for user interaction with the platform)
-# new_run_id()
-# register_calibration_graph(graph)
-
-# -- Instrument monitor --
-
-publisher = InstrumentMonitorPublisher()
-publisher.start()
+if __name__ == "__main__":    
+    graph = start_grace(quantum_device)
