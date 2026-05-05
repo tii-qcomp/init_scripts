@@ -10,9 +10,9 @@ device representation for the TII QPU165. Platform-specific constants are define
 the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 """
 
-CLUSTER_IP    = "192.168.0.20"  # IP address of the cluster.
+CLUSTER_IP    = "192.168.0.6"  # IP address of the cluster.
 PLATFORM_NAME = "qpu165"        # Used for the data directory and device config file name.
-LOAD_CFG_FILE = True           # Set True to load hardware config from the saved JSON file.
+LOAD_CFG_FILE = True           # Set True to load hardware config from the saved JSON file (set to false the first time you run a init)
 from init_scripts.hw_configs.cfg_qpu165 import HW_CONFIG_DICT
 
 ############################################
