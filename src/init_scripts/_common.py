@@ -319,7 +319,7 @@ QuantumDevice.setup_config = setup_config
 def helper_configure_ladder(
     qd,
     num_qubits: int = 5,
-    feedlines: dict | None = {"f0": ["q0", "q1", "q2", "q3", "q4"]},
+    feedlines: dict | None = None,
 ):
     """
     Populate a :class:`QuantumDevice` with a 1-D ladder of transmon qubits sharing
