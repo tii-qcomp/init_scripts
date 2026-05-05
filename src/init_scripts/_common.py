@@ -317,23 +317,40 @@ QuantumDevice.setup_config = setup_config
 # ---------------------------------------------------------------------------
 
 def helper_configure_ladder(
-    qd, num_qubits: int = 5, feedline_name: str = "f0"
+    qd,
+    num_qubits: int = 5,
+    feedlines: dict | None = {"f0": ["q0", "q1", "q2", "q3", "q4"]},
 ):
     """
     Populate a :class:`QuantumDevice` with a 1-D ladder of transmon qubits sharing
-    a single feedline.
+    one or more feedlines.
 
-    Qubits are named ``q0 … q(num_qubits-1)`` and connected with
-    :class:`~superconducting_qubit_tools.device_under_test.sudden_nz_edge.SuddenNetZeroEdge`
-    gates between adjacent pairs.
+    Qubit names and their feedline assignments are controlled by *feedlines*, a dict
+    mapping each feedline name to the ordered list of qubit names connected to it::
+
+        {
+            "f0": ["q0", "q1", "q2"],
+            "f1": ["q3", "q4"],
+        }
+
+    Qubits appear in the global order they are first encountered across all feedline
+    lists.  :class:`~superconducting_qubit_tools.device_under_test.sudden_nz_edge.SuddenNetZeroEdge`
+    gates are created between every pair of adjacent qubits in that global order.
+
+    When *feedlines* is ``None`` the call falls back to the legacy ``num_qubits`` /
+    ``feedline_name`` parameters, preserving backward compatibility: all qubits
+    ``q0 … q(num_qubits-1)`` are connected to a single feedline named *feedline_name*.
 
     Args:
         qd:           The quantum device to configure.
-        num_qubits:   Number of qubits to add.
-        feedline_name: Name for the :class:`FeedlineElement` (default ``"f0"``).
+        num_qubits:   Number of qubits to add (used only when *feedlines* is ``None``).
+        feedline_name: Feedline name (used only when *feedlines* is ``None``).
+        feedlines:    Dict mapping feedline names to ordered lists of qubit names.
+                      When provided, *num_qubits* and *feedline_name* are ignored.
 
     Returns:
-        Tuple ``(qubits, edges, feedline)``.
+        Tuple ``(qubits, edges, feedlines_dict)`` where *feedlines_dict* maps each
+        feedline name to its :class:`FeedlineElement` instance.
 
     Raises:
         ImportError: If ``superconducting_qubit_tools`` is not installed.
@@ -342,23 +359,43 @@ def helper_configure_ladder(
         raise ImportError(
             "SCQT device elements are not available. Install superconducting_qubit_tools to use helper_configure_ladder()."
         )
-    qubits, edges = [], []
 
-    for i in range(num_qubits):
-        qd.add_element(q := BasicTransmonElement(f"q{i}"))
+    # Build the feedlines dict from legacy parameters when not explicitly provided.
+    if feedlines is None:
+        feedlines = {'f0': [f"q{i}" for i in range(num_qubits)]}
+
+    # Collect all qubit names in global order (first-seen across feedlines).
+    seen: dict[str, None] = {}
+    for qubit_names in feedlines.values():
+        for name in qubit_names:
+            seen[name] = None
+    ordered_qubit_names = list(seen)
+
+    # Create qubit elements.
+    qubits = []
+    for name in ordered_qubit_names:
+        qd.add_element(q := BasicTransmonElement(name))
         qubits.append(q)
 
-    for i in range(num_qubits - 1):
+    # Create edges between adjacent qubits in the global order.
+    edges = []
+    for i in range(len(ordered_qubit_names) - 1):
         edge = SuddenNetZeroEdge(
-            child_element_name=f"q{i}", parent_element_name=f"q{i + 1}"
+            child_element_name=ordered_qubit_names[i],
+            parent_element_name=ordered_qubit_names[i + 1],
         )
         qd.add_edge(edge)
         edges.append(edge)
 
-    qd.add_element(feedline := FeedlineElement(feedline_name))
-    qd.add_connection(feedline, [q.ports.readout() for q in qubits])
+    # Create feedline elements and wire them to their qubits.
+    qubit_by_name = {q.name: q for q in qubits}
+    feedlines_dict: dict[str, FeedlineElement] = {}
+    for fl_name, qubit_names in feedlines.items():
+        qd.add_element(fl := FeedlineElement(fl_name))
+        qd.add_connection(fl, [qubit_by_name[n].ports.readout() for n in qubit_names])
+        feedlines_dict[fl_name] = fl
 
-    return qubits, edges, feedline
+    return qubits, edges, feedlines_dict
 
 
 def helper_defaults(
