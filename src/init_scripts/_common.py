@@ -148,7 +148,7 @@ except ImportError:
 # Instrument setup helpers
 # ---------------------------------------------------------------------------
 
-def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
+def setup_instrument_coordinator(clusters: list, add_default_generic_icc = False) -> InstrumentCoordinator:
     """
     Return (or create) the singleton InstrumentCoordinator and attach cluster components.
 
@@ -176,7 +176,7 @@ def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
 
     instrument_coordinator = InstrumentCoordinator(
         "instrument_coordinator",
-        add_default_generic_icc=False,
+        add_default_generic_icc=add_default_generic_icc,
     )
     ic_clusters = []
     for cluster in clusters:
@@ -310,7 +310,6 @@ def setup_config(self, hw_config: Union[QbloxHardwareCompilationConfig, dict, st
         self.hardware_config(hw_config)
     else:
         raise ValueError("hw_config must be a dict, QbloxHardwareCompilationConfig, or path to a JSON file.")
-QuantumDevice.setup_config = setup_config
 
 # ---------------------------------------------------------------------------
 # Topology helpers
@@ -386,11 +385,7 @@ def helper_defaults(
             qobj.clock_freqs.readout(
                 readouts[i] if i < len(readouts) else 7e9 + i * 100e6
             )
-
-
-_calibration_file_handler = None
-_instrument_file_handler = None
-
+            
 
 def setup_logging(platform: str):
     """
@@ -439,4 +434,7 @@ def setup_logging(platform: str):
     if handler_ic not in qs_logger.handlers:
         qs_logger.addHandler(handler_ic)
 
-    
+
+QuantumDevice.setup_config = setup_config
+_calibration_file_handler = None
+_instrument_file_handler = None
