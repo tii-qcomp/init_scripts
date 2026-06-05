@@ -144,8 +144,6 @@ q2.hardware_options.flux_bias_line.parameter("cluster0.module2.out2_offset")
 q3.hardware_options.flux_bias_line.parameter("cluster0.module2.out3_offset")
 q4.hardware_options.flux_bias_line.parameter("cluster0.module4.out0_offset")
 
-
-
 # Ensure ramping is enabled on these parameters for safety
 from contextlib import suppress
 from quantify_scheduler.instrument_coordinator.utility import search_settable_param
@@ -161,3 +159,9 @@ for element in quantum_device.elements():
 
 publisher = InstrumentMonitorPublisher()
 publisher.start()
+
+try:
+    from orangeqs.juice.identifiers.run_id import new_run_id
+    new_run_id()
+except:
+    pass # This works only in the service
