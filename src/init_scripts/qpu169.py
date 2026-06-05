@@ -123,7 +123,7 @@ def initialize(
     quantum_device.instr_nested_measurement_control(nested_meas_ctrl.name)
 
     # -- Qubit elements --
-    helper_configure_ladder(quantum_device, num_qubits=5)
+    helper_configure_ladder(quantum_device, num_qubits=8, feedlines={"f0": ["q0", "q1", "q2", "q3"], "f1": ["q4", "q5", "q6","q7"]})
 
     # -- Initial values for qubit parameters, these should be loaded from snapshots after calibration
     if load_defaults:
@@ -166,14 +166,14 @@ addresses = ['192.168.0.31', '192.168.0.37']
 freqs = [6360, 6424] #MHz
 amps = [-0.1, 0.4] #dB
 
-for i, ip_address in addresses:
+for i, ip_address in enumerate(addresses):
     rm = pyvisa.ResourceManager()
     sgs = rm.open_resource(f'TCPIP0::{ip_address}::inst0::INSTR')
     print(sgs.query('*IDN?'))
     sgs.write('OUTP OFF')
     sgs.write(f':SOUR:FREQ {freqs[i]}MHz')
     sgs.write(f':SOUR:POW:LEV:IMM:AMPL {amps[i]}')
-    print(f'freq: {sgs.query(':SOURce:FREQuency?')}, amp: {sgs.query(':SOUR:POW:LEV:IMM:AMPL?')}')
+    print(f'MWSOUR::{ip_address}: freq: {sgs.query(':SOURce:FREQuency?')}amp: {sgs.query(':SOUR:POW:LEV:IMM:AMPL?')}')
     sgs.write('OUTP ON')
     sgs.close()
 
