@@ -129,26 +129,26 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # OrangeQS / Juice
 # ---------------------------------------------------------------------------
+
 try:
-    from orangeqs.juice_ext.device_and_instruments import new_run_id
-    from orangeqs.juice_ext.device_and_instruments.instrument_monitor import (
-        InstrumentMonitorPublisher,
-    )
-    from orangeqs.juice_ext.device_and_instruments.measurement_control.measurement_control import (
-        MeasurementControl,
-    )
-    from orangeqs.juice_ext.protocol_and_automation.graph import register_calibration_graph
+    from orangeqs.juice.identifiers import new_id as new_run_id
+    from quantify.juice.measurement_control.measurement_control import MeasurementControl 
+    from quantify.juice.insmon import InstrumentMonitorPublisher
+    from grace.juice import register_calibration_graph
+
 except ImportError:
     import warnings
     warnings.warn("orangeqs.juice_ext not found. OrangeQS/Juice-dependent helpers will raise ImportError when called.")
     new_run_id = InstrumentMonitorPublisher = MeasurementControl = register_calibration_graph = None
+except Exception as e:
+    raise e
 
 
 # ---------------------------------------------------------------------------
 # Instrument setup helpers
 # ---------------------------------------------------------------------------
 
-def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
+def setup_instrument_coordinator(clusters: list, add_default_generic_icc = False) -> InstrumentCoordinator:
     """
     Return (or create) the singleton InstrumentCoordinator and attach cluster components.
 
@@ -176,7 +176,7 @@ def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
 
     instrument_coordinator = InstrumentCoordinator(
         "instrument_coordinator",
-        add_default_generic_icc=False,
+        add_default_generic_icc=add_default_generic_icc,
     )
     ic_clusters = []
     for cluster in clusters:
@@ -195,23 +195,26 @@ def setup_utilities() -> tuple:
     Raises:
         ImportError: If ``orangeqs.juice_ext`` is not installed.
     """
+    global MeasurementControl
+    
     if MeasurementControl is None:
-        raise ImportError(
-            "MeasurementControl is not available. Install orangeqs.juice_ext to use setup_utilities()."
+        import warnings
+        warnings.warn(
+            "Juice MeasurementControl is not available. Install orangeqs.juice_ext to use setup_utilities(). Importing from quantify."
         )
+        from quantify.measurement.control import MeasurementControl
+        
     active_mc = MeasurementControl.instances()
     mc_names = [mc.name for mc in active_mc]
     if "meas_ctrl" in mc_names and "nested_meas_ctrl" in mc_names:
         meas_ctrl = active_mc[mc_names.index("meas_ctrl")]
         nested_meas_ctrl = active_mc[mc_names.index("nested_meas_ctrl")]
-        
     else:
         meas_ctrl = MeasurementControl("meas_ctrl")
         nested_meas_ctrl = MeasurementControl("nested_meas_ctrl")
-        meas_ctrl.attach_plotmon()
-        
+        meas_ctrl.attach_plotmon()        
     return meas_ctrl, nested_meas_ctrl
-
+        
 
 def setup_cluster(cluster_name: str, cluster_ip: str) -> Cluster:
     """
@@ -310,7 +313,6 @@ def setup_config(self, hw_config: Union[QbloxHardwareCompilationConfig, dict, st
         self.hardware_config(hw_config)
     else:
         raise ValueError("hw_config must be a dict, QbloxHardwareCompilationConfig, or path to a JSON file.")
-QuantumDevice.setup_config = setup_config
 
 # ---------------------------------------------------------------------------
 # Topology helpers
@@ -423,11 +425,7 @@ def helper_defaults(
             qobj.clock_freqs.readout(
                 readouts[i] if i < len(readouts) else 7e9 + i * 100e6
             )
-
-
-_calibration_file_handler = None
-_instrument_file_handler = None
-
+            
 
 def setup_logging(platform: str):
     """
@@ -475,6 +473,11 @@ def setup_logging(platform: str):
     qs_logger.setLevel(logging.WARNING)
     if handler_ic not in qs_logger.handlers:
         qs_logger.addHandler(handler_ic)
+
+
+QuantumDevice.setup_config = setup_config
+_calibration_file_handler = None
+_instrument_file_handler = None
 
 # ---------------------------------------------------------------------------
 # Patches
