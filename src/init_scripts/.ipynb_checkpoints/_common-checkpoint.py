@@ -129,26 +129,26 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # OrangeQS / Juice
 # ---------------------------------------------------------------------------
-
 try:
-    from orangeqs.juice.identifiers import new_id as new_run_id
-    from quantify.juice.measurement_control.measurement_control import MeasurementControl 
-    from quantify.juice.insmon import InstrumentMonitorPublisher
-    from grace.juice import register_calibration_graph
-
+    from orangeqs.juice_ext.device_and_instruments import new_run_id
+    from orangeqs.juice_ext.device_and_instruments.instrument_monitor import (
+        InstrumentMonitorPublisher,
+    )
+    from orangeqs.juice_ext.device_and_instruments.measurement_control.measurement_control import (
+        MeasurementControl,
+    )
+    from orangeqs.juice_ext.protocol_and_automation.graph import register_calibration_graph
 except ImportError:
     import warnings
     warnings.warn("orangeqs.juice_ext not found. OrangeQS/Juice-dependent helpers will raise ImportError when called.")
     new_run_id = InstrumentMonitorPublisher = MeasurementControl = register_calibration_graph = None
-except Exception as e:
-    raise e
 
 
 # ---------------------------------------------------------------------------
 # Instrument setup helpers
 # ---------------------------------------------------------------------------
 
-def setup_instrument_coordinator(clusters: list, add_default_generic_icc = False) -> InstrumentCoordinator:
+def setup_instrument_coordinator(clusters: list) -> InstrumentCoordinator:
     """
     Return (or create) the singleton InstrumentCoordinator and attach cluster components.
 
@@ -176,7 +176,7 @@ def setup_instrument_coordinator(clusters: list, add_default_generic_icc = False
 
     instrument_coordinator = InstrumentCoordinator(
         "instrument_coordinator",
-        add_default_generic_icc=add_default_generic_icc,
+        add_default_generic_icc=False,
     )
     ic_clusters = []
     for cluster in clusters:
@@ -195,26 +195,23 @@ def setup_utilities() -> tuple:
     Raises:
         ImportError: If ``orangeqs.juice_ext`` is not installed.
     """
-    global MeasurementControl
-    
     if MeasurementControl is None:
-        import warnings
-        warnings.warn(
-            "Juice MeasurementControl is not available. Install orangeqs.juice_ext to use setup_utilities(). Importing from quantify."
+        raise ImportError(
+            "MeasurementControl is not available. Install orangeqs.juice_ext to use setup_utilities()."
         )
-        from quantify.measurement.control import MeasurementControl
-        
     active_mc = MeasurementControl.instances()
     mc_names = [mc.name for mc in active_mc]
     if "meas_ctrl" in mc_names and "nested_meas_ctrl" in mc_names:
         meas_ctrl = active_mc[mc_names.index("meas_ctrl")]
         nested_meas_ctrl = active_mc[mc_names.index("nested_meas_ctrl")]
+        
     else:
         meas_ctrl = MeasurementControl("meas_ctrl")
         nested_meas_ctrl = MeasurementControl("nested_meas_ctrl")
-        meas_ctrl.attach_plotmon()        
-    return meas_ctrl, nested_meas_ctrl
+        meas_ctrl.attach_plotmon()
         
+    return meas_ctrl, nested_meas_ctrl
+
 
 def setup_cluster(cluster_name: str, cluster_ip: str) -> Cluster:
     """
@@ -313,46 +310,30 @@ def setup_config(self, hw_config: Union[QbloxHardwareCompilationConfig, dict, st
         self.hardware_config(hw_config)
     else:
         raise ValueError("hw_config must be a dict, QbloxHardwareCompilationConfig, or path to a JSON file.")
+QuantumDevice.setup_config = setup_config
 
 # ---------------------------------------------------------------------------
 # Topology helpers
 # ---------------------------------------------------------------------------
 
 def helper_configure_ladder(
-    qd,
-    num_qubits: int = 5,
-    feedlines: dict | None = None,
+    qd, num_qubits: int = 5, feedline_name: str = "f0"
 ):
     """
     Populate a :class:`QuantumDevice` with a 1-D ladder of transmon qubits sharing
-    one or more feedlines.
+    a single feedline.
 
-    Qubit names and their feedline assignments are controlled by *feedlines*, a dict
-    mapping each feedline name to the ordered list of qubit names connected to it::
-
-        {
-            "f0": ["q0", "q1", "q2"],
-            "f1": ["q3", "q4"],
-        }
-
-    Qubits appear in the global order they are first encountered across all feedline
-    lists.  :class:`~superconducting_qubit_tools.device_under_test.sudden_nz_edge.SuddenNetZeroEdge`
-    gates are created between every pair of adjacent qubits in that global order.
-
-    When *feedlines* is ``None`` the call falls back to the legacy ``num_qubits`` /
-    ``feedline_name`` parameters, preserving backward compatibility: all qubits
-    ``q0 … q(num_qubits-1)`` are connected to a single feedline named *feedline_name*.
+    Qubits are named ``q0 … q(num_qubits-1)`` and connected with
+    :class:`~superconducting_qubit_tools.device_under_test.sudden_nz_edge.SuddenNetZeroEdge`
+    gates between adjacent pairs.
 
     Args:
         qd:           The quantum device to configure.
-        num_qubits:   Number of qubits to add (used only when *feedlines* is ``None``).
-        feedline_name: Feedline name (used only when *feedlines* is ``None``).
-        feedlines:    Dict mapping feedline names to ordered lists of qubit names.
-                      When provided, *num_qubits* and *feedline_name* are ignored.
+        num_qubits:   Number of qubits to add.
+        feedline_name: Name for the :class:`FeedlineElement` (default ``"f0"``).
 
     Returns:
-        Tuple ``(qubits, edges, feedlines_dict)`` where *feedlines_dict* maps each
-        feedline name to its :class:`FeedlineElement` instance.
+        Tuple ``(qubits, edges, feedline)``.
 
     Raises:
         ImportError: If ``superconducting_qubit_tools`` is not installed.
@@ -361,43 +342,23 @@ def helper_configure_ladder(
         raise ImportError(
             "SCQT device elements are not available. Install superconducting_qubit_tools to use helper_configure_ladder()."
         )
+    qubits, edges = [], []
 
-    # Build the feedlines dict from legacy parameters when not explicitly provided.
-    if feedlines is None:
-        feedlines = {'f0': [f"q{i}" for i in range(num_qubits)]}
-
-    # Collect all qubit names in global order (first-seen across feedlines).
-    seen: dict[str, None] = {}
-    for qubit_names in feedlines.values():
-        for name in qubit_names:
-            seen[name] = None
-    ordered_qubit_names = list(seen)
-
-    # Create qubit elements.
-    qubits = []
-    for name in ordered_qubit_names:
-        qd.add_element(q := BasicTransmonElement(name))
+    for i in range(num_qubits):
+        qd.add_element(q := BasicTransmonElement(f"q{i}"))
         qubits.append(q)
 
-    # Create edges between adjacent qubits in the global order.
-    edges = []
-    for i in range(len(ordered_qubit_names) - 1):
+    for i in range(num_qubits - 1):
         edge = SuddenNetZeroEdge(
-            child_element_name=ordered_qubit_names[i],
-            parent_element_name=ordered_qubit_names[i + 1],
+            child_element_name=f"q{i}", parent_element_name=f"q{i + 1}"
         )
         qd.add_edge(edge)
         edges.append(edge)
 
-    # Create feedline elements and wire them to their qubits.
-    qubit_by_name = {q.name: q for q in qubits}
-    feedlines_dict: dict[str, FeedlineElement] = {}
-    for fl_name, qubit_names in feedlines.items():
-        qd.add_element(fl := FeedlineElement(fl_name))
-        qd.add_connection(fl, [qubit_by_name[n].ports.readout() for n in qubit_names])
-        feedlines_dict[fl_name] = fl
+    qd.add_element(feedline := FeedlineElement(feedline_name))
+    qd.add_connection(feedline, [q.ports.readout() for q in qubits])
 
-    return qubits, edges, feedlines_dict
+    return qubits, edges, feedline
 
 
 def helper_defaults(
@@ -425,7 +386,11 @@ def helper_defaults(
             qobj.clock_freqs.readout(
                 readouts[i] if i < len(readouts) else 7e9 + i * 100e6
             )
-            
+
+
+_calibration_file_handler = None
+_instrument_file_handler = None
+
 
 def setup_logging(platform: str):
     """
@@ -474,11 +439,6 @@ def setup_logging(platform: str):
     if handler_ic not in qs_logger.handlers:
         qs_logger.addHandler(handler_ic)
 
-
-QuantumDevice.setup_config = setup_config
-_calibration_file_handler = None
-_instrument_file_handler = None
-
 # ---------------------------------------------------------------------------
 # Patches
 # ---------------------------------------------------------------------------
@@ -500,4 +460,3 @@ def patched_to_yaml_file(self, path: str | Path | None = None, add_timestamp: bo
         path = str(path)
     return YAMLSerializable.to_yaml_file(self, path=path, add_timestamp=add_timestamp)
 QuantumDevice.to_yaml_file = patched_to_yaml_file
-

@@ -1,19 +1,19 @@
 """
-Initialization script for TII QPU165.
+Initialization script for TII QPU167.
 
 Author: Juan Villegas, TII QRC
 Version: 1.0
-Date: 2026-04-03
+Date: 2026-23-03 (YYYY/DD/MM)
 
 This script sets up the hardware configuration, instrument connections, and quantum
 device representation for the TII QPU165. Platform-specific constants are defined at
 the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 """
 
-CLUSTER_IP    = "192.168.0.6"  # IP address of the cluster.
-PLATFORM_NAME = "qpu165"        # Used for the data directory and device config file name.
-LOAD_CFG_FILE = True           # Set True to load hardware config from the saved JSON file (set to false the first time you run a init)
-from init_scripts.hw_configs.cfg_qpu165 import HW_CONFIG_DICT
+CLUSTER_IP    = "192.168.0.20"  # IP address of the cluster.
+PLATFORM_NAME = "qpu167"        # Used for the data directory and device config file name.
+LOAD_CFG_FILE = True           # Set True to load hardware config from the saved JSON file.
+from init_scripts.hw_configs.cfg_qpu167 import HW_CONFIG_DICT
 
 ############################################
 # 1. Imports
@@ -40,7 +40,7 @@ from init_scripts._common import (
     new_run_id, register_calibration_graph,
     # helpers
     setup_cluster, setup_device, setup_instrument_coordinator, setup_utilities, setup_logging,
-    helper_configure_ladder, helper_defaults,
+    helper_configure_ladder, helper_defaults, 
 )
 
 ############################################
@@ -157,6 +157,7 @@ def start_grace(quantum_device):
     # When used as a service, generates unique run identifiers (not for interactive use):
     new_run_id()
     register_calibration_graph(graph)
+    return graph
     
-if __name__ == "__main__":
-    start_grace(quantum_device)
+if __name__ == "__main__":    
+    pass

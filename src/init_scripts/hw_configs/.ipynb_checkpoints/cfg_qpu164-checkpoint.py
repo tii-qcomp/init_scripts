@@ -19,8 +19,8 @@ from quantify_scheduler.backends.qblox_backend import QbloxHardwareCompilationCo
 from quantify_scheduler.backends.types.qblox import ComplexChannelDescription
 from quantify_scheduler.backends.qblox.enums import DistortionCorrectionLatencyEnum, LoCalEnum, SidebandCalEnum
 
-drive_modules = ["8", "15", "14"]
-probe_module = ["19"]
+drive_modules = ["10", "12", "14"]
+probe_module = ["18"]
 num_qubits = 5
 
 HW_CONFIG_DICT = {
@@ -44,7 +44,9 @@ HW_CONFIG_DICT = {
             )
         },
         hardware_options = QbloxHardwareOptions(
-            latency_corrections={},
+            latency_corrections={
+                f"q{i}:mw-q{i}.01": 0e-9 for i in range(num_qubits)
+            },
             modulation_frequencies= {
                 # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
                 **{
@@ -100,17 +102,17 @@ HW_CONFIG_DICT = {
         ),
         connectivity=Connectivity.model_validate(
             {"graph": [
-                ("cluster0.module15.complex_output_0", "q0:mw"),
-                ("cluster0.module15.complex_output_1", "q1:mw"),
-                ("cluster0.module14.complex_output_0", "q2:mw"),
-                ("cluster0.module14.complex_output_1", "q3:mw"),
-                ("cluster0.module8.complex_output_1", "q4:mw"),
-                ("cluster0.module19.complex_output_0", "q0:res"),
-                ("cluster0.module19.complex_output_0", "q1:res"),
-                ("cluster0.module19.complex_output_0", "q2:res"),
-                ("cluster0.module19.complex_output_0", "q3:res"),
-                ("cluster0.module19.complex_output_0", "q4:res"),
-                ("cluster0.module19.complex_output_0", "f0:in"),
+                ("cluster0.module10.complex_output_0", "q0:mw"),
+                ("cluster0.module10.complex_output_1", "q1:mw"),
+                ("cluster0.module12.complex_output_0", "q2:mw"),
+                ("cluster0.module12.complex_output_1", "q3:mw"),
+                ("cluster0.module14.complex_output_1", "q4:mw"),
+                ("cluster0.module18.complex_output_0", "q0:res"),
+                ("cluster0.module18.complex_output_0", "q1:res"),
+                ("cluster0.module18.complex_output_0", "q2:res"),
+                ("cluster0.module18.complex_output_0", "q3:res"),
+                ("cluster0.module18.complex_output_0", "q4:res"),
+                ("cluster0.module18.complex_output_0", "f0:in"),
             ]}
         ).model_dump(),
     ).model_dump(),
