@@ -43,53 +43,43 @@ from qblox_instruments import Cluster
 # ---------------------------------------------------------------------------
 # Quantify – prefer the `quantify` package, fall back to `quantify_core`
 # ---------------------------------------------------------------------------
-try:
-    import quantify
-    from quantify.data.handling import get_datadir, set_datadir
-    from quantify.utilities.experiment_helpers import load_settings_onto_instrument
-except ImportError as e:
-    print("Cannot import quantify, using quantify_core")
-    print(e)
-    import quantify_core as quantify
-    from quantify_core.data.handling import get_datadir, set_datadir
-    import quantify_core.visualization.pyqt_plotmon as pqm #Stilll needs to be handled
-    from quantify_core.utilities.experiment_helpers import load_settings_onto_instrument
-    from quantify_core.visualization.instrument_monitor import InstrumentMonitor #Stilll needs to be handled
 
-import quantify_scheduler
+import quantify
+from quantify.data.handling import get_datadir, set_datadir
+from quantify.utilities.experiment_helpers import load_settings_onto_instrument
 
 # ---------------------------------------------------------------------------
-# Quantify scheduler
+# qblox_scheduler (quantify wrapped)
 # ---------------------------------------------------------------------------
-from quantify_scheduler.backends.qblox_backend import constants as qblox_constants
+from quantify.instrument_coordinator.instrument_coordinator import InstrumentCoordinator
+# from quantify.instrument_coordinator.components.generic import GenericInstrumentCoordinatorComponent
+from quantify.instrument_coordinator.components.qblox_scheduler import QbloxSchedulerInstrumentCoordinatorComponent
+# from quantify_scheduler.instrument_coordinator.components.qblox import ClusterComponent
+
+from quantify.instrument_coordinator.utility import search_settable_param
+import quantify.measurement as mc
+from quantify.visualization.instrument_monitor import launch_instrument_monitor
+
+import qblox_scheduler
+from qblox_scheduler.backends.qblox_backend import constants as qblox_constants
+# from qblox_scheduler.instrument_coordinator.components.qblox import ClusterComponent
 qblox_constants.NUMBER_OF_QBLOX_ACQ_BINS = 2**16
-from quantify_scheduler.instrument_coordinator.components.qblox import ClusterComponent
-from quantify_scheduler.instrument_coordinator.components.generic import (
-    GenericInstrumentCoordinatorComponent,
-)
-from quantify_scheduler.instrument_coordinator.instrument_coordinator import (
-    InstrumentCoordinator,
-)
-from quantify_scheduler.instrument_coordinator.utility import search_settable_param
+
 
 # ---------------------------------------------------------------------------
 # Quantify Pydantic Types
 # ---------------------------------------------------------------------------
-from quantify.backends.types.common import ( 
-    Connectivity,
-)
-from quantify_scheduler.backends.types.qblox import (
-    ClusterSettings, AnalogModuleSettings, RFModuleSettings,
-    QbloxHardwareDescription, ClusterDescription, ClusterModuleDescription, QbloxHardwareOptions,
+from quantify.backends.types.common import Connectivity, ModulationFrequencies
+from quantify.backends.qblox_scheduler.types import QbloxHardwareDescription, QbloxMixerCorrections, QbloxRealInputGain
+from quantify.backends.qblox_scheduler import QbloxSchedulerHardwareCompilationConfig
+from quantify.backends.qblox_scheduler import QbloxHardwareOptions
+from superconducting_qubit_tools.backends.hardware_description import QbloxHardwareCompilationConfig
+
+from qblox_scheduler.backends.types.qblox import (
     QRMDescription, QCMDescription, QRMRFDescription, QCMRFDescription, QTMDescription, 
-    QbloxHardwareDistortionCorrection, QbloxMixerCorrections, ComplexInputGain, InputAttenuation, OutputAttenuation 
 )
-from quantify_scheduler.backends.types.common import (
-    ModulationFrequencies
-)
-
-from quantify_scheduler.backends.qblox_backend import QbloxHardwareCompilationConfig
-
+from qblox_scheduler.backends.types.qblox import ComplexChannelDescription
+from qblox_scheduler.backends.qblox.enums import DistortionCorrectionLatencyEnum, LoCalEnum, SidebandCalEnum
 # ---------------------------------------------------------------------------
 # SCQT
 # ---------------------------------------------------------------------------
@@ -148,7 +138,7 @@ except Exception as e:
 # Instrument setup helpers
 # ---------------------------------------------------------------------------
 
-def setup_instrument_coordinator(clusters: list, add_default_generic_icc = False) -> InstrumentCoordinator:
+def setup_instrument_coordinator(clusters: list = [], add_default_generic_icc = False) -> InstrumentCoordinator:
     """
     Return (or create) the singleton InstrumentCoordinator and attach cluster components.
 
@@ -159,7 +149,7 @@ def setup_instrument_coordinator(clusters: list, add_default_generic_icc = False
         clusters: List of :class:`~qblox_instruments.Cluster` instances to add.
 
     Returns:
-        The configured :class:`~quantify_scheduler.instrument_coordinator.InstrumentCoordinator`.
+        The configured :class:`~qblox_scheduler.instrument_coordinator.InstrumentCoordinator`.
     """
     active_ics = InstrumentCoordinator.instances()
     if len(active_ics) > 0:
@@ -178,11 +168,15 @@ def setup_instrument_coordinator(clusters: list, add_default_generic_icc = False
         "instrument_coordinator",
         add_default_generic_icc=add_default_generic_icc,
     )
-    ic_clusters = []
-    for cluster in clusters:
-        ic_cluster = ClusterComponent(cluster)
-        ic_clusters.append(ic_cluster)
-        instrument_coordinator.add_component(ic_cluster)
+    # ic_clusters = []
+    # for cluster in clusters:
+    #     print(cluster)
+    #     ic_cluster = QbloxSchedulerInstrumentCoordinatorComponent(cluster)
+    #     ic_clusters.append(ic_cluster)
+    #     instrument_coordinator.add_component(ic_cluster)
+    instrument_coordinator.add_component(
+        QbloxSchedulerInstrumentCoordinatorComponent()
+    )
     return instrument_coordinator
 
 def setup_utilities() -> tuple:
@@ -235,13 +229,13 @@ def setup_cluster(cluster_name: str, cluster_ip: str) -> Cluster:
         logger.info(f"Cluster '{cluster_name}' already exists — reusing existing instance.")
         return Cluster._all_instruments[cluster_name]
 
-    cluster = Cluster(cluster_name, cluster_ip)
+    cluster0 = Cluster(cluster_name, cluster_ip)
     logger.info(f"{cluster_name} connected: {cluster.get_system_status()}")
-    cluster.ext_trigger_input_trigger_address(1) # Typically unused but needs to be set to a valid value (1-15)
-    for module in cluster.modules:
+    cluster0.ext_trigger_input_trigger_address(1) # Typically unused but needs to be set to a valid value (1-15)
+    for module in cluster0.modules:
         for sequencer in module.sequencers:
             sequencer.nco_prop_delay_comp_en(True)
-    return cluster
+    return cluster0
 
 
 # ---------------------------------------------------------------------------
@@ -288,10 +282,10 @@ def setup_device(
     )
     return qd
 
-def setup_config(self, hw_config: Union[QbloxHardwareCompilationConfig, dict, str, Path]) -> None:
+def setup_config(self, hw_config: Union[QbloxSchedulerHardwareCompilationConfig, QbloxHardwareCompilationConfig, dict, str, Path]) -> None:
     """ Extended method for QuantumDevice to load hardware configuration from a dict or JSON file.
         arguments:
-            hw_config:  Can be a QbloxHardwareCompilationConfig instance, a dict, or a path (str or Path)
+            hw_config:  Can be a QbloxSchedulerHardwareCompilationConfig instance, a dict, or a path (str or Path)
                         to a JSON file containing the hardware configuration.
     """
     if isinstance(hw_config, (str, Path)):
@@ -299,20 +293,18 @@ def setup_config(self, hw_config: Union[QbloxHardwareCompilationConfig, dict, st
         if not hw_config_path.exists():
             raise FileNotFoundError(f"Hardware config file not found at {hw_config_path}")
         self.hardware_config.load_from_json_file(hw_config_path)
-    elif isinstance(hw_config, dict) or isinstance(hw_config, QbloxHardwareCompilationConfig):
+    elif isinstance(hw_config, dict) or isinstance(hw_config, QbloxSchedulerHardwareCompilationConfig) or isinstance(hw_config, QbloxHardwareCompilationConfig):
         # Normalise to plain dict (handles Pydantic models passed directly)
         if hasattr(hw_config, "model_dump"):
             hw_config = hw_config.model_dump(mode="json")
-        # Ensure config_type is present — model_dump() silently drops it but
-        # SCQT needs it to identify the Qblox backend when calling
-        # generate_hardware_config() internally.
-        if isinstance(hw_config, dict) and "config_type" not in hw_config:
+        
+        if isinstance(hw_config, dict):
             hw_config["config_type"] = (
-                "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig"
+                "superconducting_qubit_tools.backends.hardware_description.QbloxHardwareCompilationConfig"
             )
         self.hardware_config(hw_config)
     else:
-        raise ValueError("hw_config must be a dict, QbloxHardwareCompilationConfig, or path to a JSON file.")
+        raise ValueError("hw_config must be a dict, QbloxSchedulerHardwareCompilationConfig, or path to a JSON file.")
 
 # ---------------------------------------------------------------------------
 # Topology helpers
@@ -399,6 +391,86 @@ def helper_configure_ladder(
 
     return qubits, edges, feedlines_dict
 
+def purcell_helper_configure_ladder(
+    qd,
+    num_qubits: int = 5,
+    feedlines: dict | None = None,
+):
+    """
+    Populate a :class:`QuantumDevice` with a 1-D ladder of transmon qubits sharing
+    one or more feedlines.
+
+    Qubit names and their feedline assignments are controlled by *feedlines*, a dict
+    mapping each feedline name to the ordered list of qubit names connected to it::
+
+        {
+            "f0": ["q0", "q1", "q2"],
+            "f1": ["q3", "q4"],
+        }
+
+    Qubits appear in the global order they are first encountered across all feedline
+    lists.  :class:`~superconducting_qubit_tools.device_under_test.sudden_nz_edge.SuddenNetZeroEdge`
+    gates are created between every pair of adjacent qubits in that global order.
+
+    When *feedlines* is ``None`` the call falls back to the legacy ``num_qubits`` /
+    ``feedline_name`` parameters, preserving backward compatibility: all qubits
+    ``q0 … q(num_qubits-1)`` are connected to a single feedline named *feedline_name*.
+
+    Args:
+        qd:           The quantum device to configure.
+        num_qubits:   Number of qubits to add (used only when *feedlines* is ``None``).
+        feedline_name: Feedline name (used only when *feedlines* is ``None``).
+        feedlines:    Dict mapping feedline names to ordered lists of qubit names.
+                      When provided, *num_qubits* and *feedline_name* are ignored.
+
+    Returns:
+        Tuple ``(qubits, edges, feedlines_dict)`` where *feedlines_dict* maps each
+        feedline name to its :class:`FeedlineElement` instance.
+
+    Raises:
+        ImportError: If ``superconducting_qubit_tools`` is not installed.
+    """
+    if TransmonElementPurcell is None or SuddenNetZeroEdge is None or FeedlineElement is None:
+        raise ImportError(
+            "SCQT device elements are not available. Install superconducting_qubit_tools to use helper_configure_ladder()."
+        )
+
+    # Build the feedlines dict from legacy parameters when not explicitly provided.
+    if feedlines is None:
+        feedlines = {'f0': [f"q{i}" for i in range(num_qubits)]}
+
+    # Collect all qubit names in global order (first-seen across feedlines).
+    seen: dict[str, None] = {}
+    for qubit_names in feedlines.values():
+        for name in qubit_names:
+            seen[name] = None
+    ordered_qubit_names = list(seen)
+
+    # Create qubit elements.
+    qubits = []
+    for name in ordered_qubit_names:
+        qd.add_element(q := TransmonElementPurcell(name))
+        qubits.append(q)
+
+    # Create edges between adjacent qubits in the global order.
+    edges = []
+    for i in range(len(ordered_qubit_names) - 1):
+        edge = SuddenNetZeroEdge(
+            child_element_name=ordered_qubit_names[i],
+            parent_element_name=ordered_qubit_names[i + 1],
+        )
+        qd.add_edge(edge)
+        edges.append(edge)
+
+    # Create feedline elements and wire them to their qubits.
+    qubit_by_name = {q.name: q for q in qubits}
+    feedlines_dict: dict[str, FeedlineElement] = {}
+    for fl_name, qubit_names in feedlines.items():
+        qd.add_element(fl := FeedlineElement(fl_name))
+        qd.add_connection(fl, [qubit_by_name[n].ports.readout() for n in qubit_names])
+        feedlines_dict[fl_name] = fl
+
+    return qubits, edges, feedlines_dict
 
 def helper_defaults(
     qd: QuantumDevice,
@@ -437,7 +509,7 @@ def setup_logging(platform: str):
       logger named by *platform* and from ``superconducting_qubit_tools``,
       both with propagation enabled.
     * ``instrument_logs.log`` records WARNING-and-above messages from
-      ``quantify_scheduler.instrument_coordinator.utility`` only, with
+      ``qblox_scheduler.instrument_coordinator.utility`` only, with
       propagation disabled to avoid duplicate console output.
     """
     global _calibration_file_handler, _instrument_file_handler
@@ -468,7 +540,7 @@ def setup_logging(platform: str):
     if handler not in scqt_logger.handlers:
         scqt_logger.addHandler(handler)
     
-    qs_logger = logging.getLogger("quantify_scheduler.instrument_coordinator.utility")
+    qs_logger = logging.getLogger("qblox_scheduler.instrument_coordinator.utility")
     qs_logger.propagate = False  # Prevent it from printing to console
     qs_logger.setLevel(logging.WARNING)
     if handler_ic not in qs_logger.handlers:
@@ -483,21 +555,44 @@ _instrument_file_handler = None
 # Patches
 # ---------------------------------------------------------------------------
 
-from quantify_scheduler.yaml_utils import YAMLSerializable
-from quantify_scheduler import yaml_utils
+import os
+from datetime import datetime, timezone
+from pathlib import Path
+import numpy as np
+from qblox_scheduler import yaml_utils
 from ruamel.yaml import YAML
 
-#Patch `to_yaml_file` with new quantify get_datadir and ruamel reset with representers
+# Patch `to_yaml_file` with new quantify get_datadir and ruamel reset with representers
 def patched_to_yaml_file(self, path: str | Path | None = None, add_timestamp: bool = True) -> str:
     yaml_utils.yaml = YAML(typ="rt")
     yaml_utils.yaml.representer.add_multi_representer(np.floating, lambda r, d: r.represent_float(float(d)))
     yaml_utils.yaml.representer.add_multi_representer(np.integer,  lambda r, d: r.represent_int(int(d)))
     yaml_utils.yaml.representer.add_multi_representer(np.ndarray,  lambda r, d: r.represent_list(d.tolist()))
+    
     # Handle the default path logic
     if path is None:
         path = get_datadir() 
     if isinstance(path, Path):
         path = str(path)
-    return YAMLSerializable.to_yaml_file(self, path=path, add_timestamp=add_timestamp)
+        
+    # Ensure we are extracting the directory so we can append the custom filename
+    directory = path if os.path.isdir(path) else os.path.dirname(path)
+    if not directory:
+        directory = "."
+        
+    # 1. Generate the exact filename format
+    if add_timestamp:
+        # Formats the UTC time as YYYY-MM-DD_HH-MM-SS
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d_%H-%M-%S")
+        filename = f"{self.name}_{timestamp}_UTC.yaml"
+    else:
+        filename = f"{self.name}.yaml"
+        
+    full_filepath = os.path.join(directory, filename)
+        
+    # 2. Write to the file using your patched yaml configuration
+    with open(full_filepath, "w") as file:
+        yaml_utils.yaml.dump(self, file)
+    return full_filepath
 QuantumDevice.to_yaml_file = patched_to_yaml_file
 

@@ -1,37 +1,32 @@
 """
-Initialization script for TII QPU168.
+Initialization script for TII QPU185.
 
 Author: Juan Villegas, TII QRC
-Version: 1.1
-Date: 2026-05-05 (YYYY/DD/MM)
+Version: 1.0
+Date: 2026-08-03 (YYYY/DD/MM)
 
 This script sets up the hardware configuration, instrument connections, and quantum
-device representation for the TII QPU165. Platform-specific constants are defined at
+device representation for the TII QPU185. Platform-specific constants are defined at
 the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 """
 
-CLUSTER_IP    = "192.168.0.2"  # IP address of the cluster.
-PLATFORM_NAME = "qpu169"        # Used for the data directory and device config file name.
+CLUSTER_IP    = "192.168.0.22"  # IP address of the cluster.
+PLATFORM_NAME = "qpu186"        # Used for the data directory and device config file name.
 LOAD_CFG_FILE = True           # Set True to load hardware config from the saved JSON file.
-from init_scripts.hw_configs.cfg_qpu169 import HW_CONFIG_DICT
+from init_scripts.hw_configs.cfg_qpu186 import HW_CONFIG_DICT
 
+HW_CONFIG_DICT['hardware_description']['cluster']['ip']= CLUSTER_IP
 ############################################
 # 1. Imports
 ############################################
 
 from init_scripts._common import (
-    # stdlib
-    logging, time, os, Path,
-    # numeric / visualization
-    np, plt, 
-    # instruments
-    Instrument, Cluster, qblox,
-    # quantify (quantify_core fallback handled in _common)
+    logging, time, os, Path, # stdlib
+    np, plt, # numeric / visualization
+    Instrument, Cluster, qblox, # instruments
     get_datadir, set_datadir, load_settings_onto_instrument,
+    # quantify and SCQT
     quantify, qblox_scheduler,
-    InstrumentCoordinator, ClusterComponent, GenericInstrumentCoordinatorComponent,
-    search_settable_param,
-    # SCQT
     scqt, cal, meas, generate_calibration_graph,
     QuantumDevice, BasicTransmonElement, TransmonElementPurcell,
     TunableCouplerTransmonElement, FeedlineElement, SuddenNetZeroEdge,
@@ -47,8 +42,8 @@ from init_scripts._common import (
 # 2. Utilities (created once, reused across initialize() calls)
 ############################################
 
-cluster0 = setup_cluster("cluster0", CLUSTER_IP)
-instrument_coordinator = setup_instrument_coordinator(clusters=[cluster0])
+# cluster0 = setup_cluster("qblox_scheduler", CLUSTER_IP)
+instrument_coordinator = setup_instrument_coordinator()
 meas_ctrl, nested_meas_ctrl = setup_utilities()
 
 ############################################
@@ -61,7 +56,7 @@ def initialize(
     load_defaults: bool = True,
 ) -> QuantumDevice:
     """
-    Initialize QPU165 and return the configured QuantumDevice.
+    Initialize QPU186 and return the configured QuantumDevice.
 
     The cluster, instrument coordinator, and measurement controls are shared
     module-level singletons created once on import.  Calling ``initialize()``
@@ -115,8 +110,9 @@ def initialize(
     if load_cfg_file and _hw_cfg_path.is_file():
         quantum_device.setup_config(_hw_cfg_path)
     else:
+        print('Loading hardware configuration form dictionnary')
         quantum_device.setup_config(HW_CONFIG_DICT)
-
+        
     # Explicitly bind instruments — required by SCQT calibration routines
     quantum_device.instr_instrument_coordinator(instrument_coordinator.name)
     quantum_device.instr_measurement_control(meas_ctrl.name)
@@ -129,8 +125,8 @@ def initialize(
     if load_defaults:
         helper_defaults(
             quantum_device,
-            clocks=[3.88e9, 4.02e9, 4.229e9, 4.342, 3.88e9, 4.02e9, 4.229e9, 4.342],
-            readouts=[7.01e9, 7.09e9, 7.19e9, 7.28e9, 7.01e9, 7.09e9, 7.19e9, 7.28e9],
+            clocks=[3.654e9, 3.805e9, 3.744e9, 4.063, 3.88e9, 3.705e9, 3.907e9, 4.328],
+            readouts=[7.0454e9, 7.1238e9, 7.2181e9, 7.3131e9, 7.0166e9, 7.1178e9, 7.2236e9, 7.3211e9],
         )
 
     # -- Instrument monitor --
@@ -149,33 +145,34 @@ qubits = [quantum_device.get_element(f"q{i}") for i in range(8)]
 q0, q1, q2, q3, q4, q5, q6, q7 = qubits
 feedlines = [quantum_device.get_element(f"f{i}") for i in range(2)]
 f0, f1 = feedlines
-def start_grace(quantum_device):
+
+def start_grace():
     # -- Calibration graph --
     graph = generate_calibration_graph(quantum_device = quantum_device)
     graph.set_all_node_states("needs calibration")
 
     # When used as a service, generates unique run identifiers (not for interactive use):
-    new_run_id()
+    new_run_id(prefix='')
     register_calibration_graph(graph)
     return graph
 
 # Turn on TWPAs
-import pyvisa
+# import pyvisa
 
-addresses = ['192.168.0.31', '192.168.0.37']
-freqs = [6360, 6424] #MHz
-amps = [-0.1, 0.4] #dB
+# addresses = ['192.168.0.31', '192.168.0.37']
+# freqs = [6360, 6424] #MHz
+# amps = [-0.1, 0.4] #dB
 
-for i, ip_address in enumerate(addresses):
-    rm = pyvisa.ResourceManager()
-    sgs = rm.open_resource(f'TCPIP0::{ip_address}::inst0::INSTR')
-    print(sgs.query('*IDN?'))
-    sgs.write('OUTP OFF')
-    sgs.write(f':SOUR:FREQ {freqs[i]}MHz')
-    sgs.write(f':SOUR:POW:LEV:IMM:AMPL {amps[i]}')
-    print(f'MWSOUR::{ip_address}: freq: {sgs.query(':SOURce:FREQuency?')}amp: {sgs.query(':SOUR:POW:LEV:IMM:AMPL?')}')
-    sgs.write('OUTP ON')
-    sgs.close()
+# for i, ip_address in enumerate(addresses):
+#     rm = pyvisa.ResourceManager()
+#     sgs = rm.open_resource(f'TCPIP0::{ip_address}::inst0::INSTR')
+#     print(sgs.query('*IDN?'))
+#     sgs.write('OUTP OFF')
+#     sgs.write(f':SOUR:FREQ {freqs[i]}MHz')
+#     sgs.write(f':SOUR:POW:LEV:IMM:AMPL {amps[i]}')
+#     print(f'MWSOUR::{ip_address}: freq: {sgs.query(':SOURce:FREQuency?')}amp: {sgs.query(':SOUR:POW:LEV:IMM:AMPL?')}')
+#     sgs.write('OUTP ON')
+#     sgs.close()
 
-if __name__ == "__main__":    
-    pass
+# if __name__ == "__main__":    
+#     pass
