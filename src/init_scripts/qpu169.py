@@ -2,7 +2,7 @@
 Initialization script for TII QPU168.
 
 Author: Juan Villegas, TII QRC
-Version: 1.0
+Version: 1.1
 Date: 2026-05-05 (YYYY/DD/MM)
 
 This script sets up the hardware configuration, instrument connections, and quantum
@@ -12,7 +12,7 @@ the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 
 CLUSTER_IP    = "192.168.0.2"  # IP address of the cluster.
 PLATFORM_NAME = "qpu169"        # Used for the data directory and device config file name.
-LOAD_CFG_FILE = False           # Set True to load hardware config from the saved JSON file.
+LOAD_CFG_FILE = True           # Set True to load hardware config from the saved JSON file.
 from init_scripts.hw_configs.cfg_qpu169 import HW_CONFIG_DICT
 
 ############################################
@@ -28,7 +28,7 @@ from init_scripts._common import (
     Instrument, Cluster, qblox,
     # quantify (quantify_core fallback handled in _common)
     get_datadir, set_datadir, load_settings_onto_instrument,
-    quantify, quantify_scheduler,
+    quantify, qblox_scheduler,
     InstrumentCoordinator, ClusterComponent, GenericInstrumentCoordinatorComponent,
     search_settable_param,
     # SCQT
@@ -83,7 +83,7 @@ def initialize(
     print(f"scqt version            : {scqt.__version__}")
     print(f"grace version           : {grace.__version__}")
     print(f"quantify version        : {quantify.__version__}")
-    print(f"quantify-scheduler ver  : {quantify_scheduler.__version__}")
+    print(f"qblox-scheduler ver     : {qblox_scheduler.__version__}")
     print(f"qblox-instruments ver   : {qblox.__version__}")
 
     # Benchmarking start
