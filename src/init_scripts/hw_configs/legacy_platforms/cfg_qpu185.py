@@ -4,27 +4,27 @@
 from quantify.backends.types.common import ( 
     Connectivity,
 )
-from qblox_scheduler.backends.types.qblox import (
+from quantify_scheduler.backends.types.qblox import (
     ClusterSettings, AnalogModuleSettings, RFModuleSettings,
     QbloxHardwareDescription, ClusterDescription, ClusterModuleDescription, QbloxHardwareOptions,
     QRMDescription, QCMDescription, QRMRFDescription, QCMRFDescription, QTMDescription, 
     QbloxHardwareDistortionCorrection, QbloxMixerCorrections, ComplexInputGain, InputAttenuation, OutputAttenuation 
 )
-from qblox_scheduler.backends.types.common import (
+from quantify_scheduler.backends.types.common import (
     ModulationFrequencies
 )
 
-from qblox_scheduler.backends.qblox_backend import QbloxHardwareCompilationConfig
+from quantify_scheduler.backends.qblox_backend import QbloxHardwareCompilationConfig
 
-from qblox_scheduler.backends.types.qblox import ComplexChannelDescription
-from qblox_scheduler.backends.qblox.enums import DistortionCorrectionLatencyEnum, LoCalEnum, SidebandCalEnum
+from quantify_scheduler.backends.types.qblox import ComplexChannelDescription
+from quantify_scheduler.backends.qblox.enums import DistortionCorrectionLatencyEnum, LoCalEnum, SidebandCalEnum
 
-drive_modules = ["16", "14"]
-probe_module = ["20"]
+drive_modules = ["8", "10", "12", "14"]
+probe_module = ["18", "20"]
 num_qubits = 8
 
 HW_CONFIG_DICT = {
-    'config_type' : "qblox_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
+    'config_type' : "quantify_scheduler.backends.qblox_backend.QbloxHardwareCompilationConfig",
     **QbloxHardwareCompilationConfig(
         hardware_description = {
             "cluster0": ClusterDescription(
@@ -49,12 +49,13 @@ HW_CONFIG_DICT = {
                 # e.g "q0:res-q0.ro": {"lo_freq": 7.26e9}, ...
                 **{
                     f"q{i}:{tipo1}-q{i}.{tipo2}":
-                        ModulationFrequencies(lo_freq=7.26e9) if tipo1 == "res" and tipo2 == "ro" else
+                        ModulationFrequencies(lo_freq=7.1e9) if tipo1 == "res" and tipo2 == "ro" else
                         ModulationFrequencies(lo_freq=3.9e9 + i * 0.2e9)
                     for (tipo1, tipo2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
                     for i in range(num_qubits)
                 },
-                "f0:in-f0.ro": ModulationFrequencies(lo_freq=7.26e9),
+                "f0:in-f0.ro": ModulationFrequencies(lo_freq=7.1e9),
+                "f1:in-f1.ro": ModulationFrequencies(lo_freq=7.26e9),
             }, 
             output_att={
                 **{
@@ -100,24 +101,24 @@ HW_CONFIG_DICT = {
         ),
         connectivity=Connectivity.model_validate(
             {"graph": [
-                ("cluster0.module16.complex_output_0", "q0:mw"),
-                ("cluster0.module16.complex_output_1", "q1:mw"),
-                ("cluster0.module14.complex_output_0", "q2:mw"),
-                ("cluster0.module14.complex_output_1", "q3:mw"),
-                ("cluster0.module16.complex_output_0", "q4:mw"),
-                ("cluster0.module16.complex_output_1", "q5:mw"),
-                ("cluster0.module14.complex_output_0", "q6:mw"),
-                ("cluster0.module14.complex_output_1", "q7:mw"),
-                ("cluster0.module20.complex_output_0", "q0:res"),
-                ("cluster0.module20.complex_output_0", "q1:res"),
-                ("cluster0.module20.complex_output_0", "q2:res"),
-                ("cluster0.module20.complex_output_0", "q3:res"),
+                ("cluster0.module14.complex_output_0", "q0:mw"),
+                ("cluster0.module14.complex_output_1", "q1:mw"),
+                ("cluster0.module12.complex_output_0", "q2:mw"),
+                ("cluster0.module12.complex_output_1", "q3:mw"),
+                ("cluster0.module10.complex_output_0", "q4:mw"),
+                ("cluster0.module10.complex_output_1", "q5:mw"),
+                ("cluster0.module8.complex_output_0", "q6:mw"),
+                ("cluster0.module8.complex_output_1", "q7:mw"),
+                ("cluster0.module18.complex_output_0", "q0:res"),
+                ("cluster0.module18.complex_output_0", "q1:res"),
+                ("cluster0.module18.complex_output_0", "q2:res"),
+                ("cluster0.module18.complex_output_0", "q3:res"),
                 ("cluster0.module20.complex_output_0", "q4:res"),
                 ("cluster0.module20.complex_output_0", "q5:res"),
                 ("cluster0.module20.complex_output_0", "q6:res"),
                 ("cluster0.module20.complex_output_0", "q7:res"),
-                ("cluster0.module20.complex_output_0", "f0:in"),
-                ("cluster0.module20.complex_output_0", "f0:in"),
+                ("cluster0.module20.complex_output_0", "f1:in"),
+                ("cluster0.module18.complex_output_0", "f0:in"),
             ]}
         ).model_dump(),
     ).model_dump(),
