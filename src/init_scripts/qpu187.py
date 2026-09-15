@@ -1,12 +1,12 @@
 """
-Initialization script for TII QPU185.
+Initialization script for TII QPU187.
 
 Author: Juan Villegas, TII QRC
 Version: 1.0
 Date: 2026-08-17 (YYYY/DD/MM)
 
 This script sets up the hardware configuration, instrument connections, and quantum
-device representation for the TII QPU185. Platform-specific constants are defined at
+device representation for the TII QPU187. Platform-specific constants are defined at
 the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 """
 
