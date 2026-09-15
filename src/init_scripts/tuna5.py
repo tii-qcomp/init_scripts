@@ -12,7 +12,7 @@ the top; shared boilerplate is delegated to :mod:`init_scripts._common`.
 
 CLUSTER_IP    = "192.168.0.6"  # IP address of the cluster.
 PLATFORM_NAME = "tuna5"        # Used for the data directory and device config file name.
-LOAD_CFG_FILE = True           # Set True to load hardware config from the saved JSON file.
+LOAD_CFG_FILE = False           # Set True to load hardware config from the saved JSON file.
 from init_scripts.hw_configs.cfg_tuna5 import HW_CONFIG_DICT
 
 HW_CONFIG_DICT['hardware_description']['cluster']['ip']=CLUSTER_IP
@@ -185,9 +185,12 @@ def start_grace():
 # Turn on TWPAs
 import pyvisa
 
-addresses = ['192.168.0.35']
-freqs = [8468] #MHz
-amps = [-13.8] #dB
+# addresses = ['192.168.0.35']
+addresses = ['192.168.0.31']
+# freqs = [8824]#[8468] #MHz
+# amps = [-16]#[-13.8] #dB
+freqs = [7000] #MHz
+amps = [-13.5] #dB
 
 for i, ip_address in enumerate(addresses):
     rm = pyvisa.ResourceManager()
