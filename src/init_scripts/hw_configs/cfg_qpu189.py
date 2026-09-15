@@ -16,7 +16,6 @@ drive_modules = ["8", "10", "12", "14"]
 probe_module = ["18", "20"]
 num_qubits = 8
 
-
 HW_CONFIG_DICT = {
     'config_type' : "superconducting_qubit_tools.backends.hardware_description.QbloxHardwareCompilationConfig",
     **QbloxHardwareCompilationConfig(
@@ -51,7 +50,7 @@ HW_CONFIG_DICT = {
                 **{
                     # For cross resonance
                     f'q{i}:{tipo1}-q{j}.{tipo2}':
-                        ModulationFrequencies(lo_freq=3.9e9 + i * 0.2e9)
+                        ModulationFrequencies(lo_freq=3.9e9)
                     for i in range(num_qubits)
                     for j in range(max(i-1,1),min(i+1,num_qubits-1)+1,2)
                     for (tipo1, tipo2) in [("mw", "01")]
@@ -74,16 +73,32 @@ HW_CONFIG_DICT = {
                 for i in range(num_qubits)
             },
             mixer_corrections={
-                f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections(
-                    dc_offset_i = 0.0,
-                    dc_offset_q = 0.0,
-                    amp_ratio = 1.0,
-                    phase_error = 0.0,
-                    auto_lo_cal= LoCalEnum.OFF , #"on_lo_interm_freq_change",
-                    auto_sideband_cal= SidebandCalEnum.OFF , #"on_interm_freq_change"
-                ) 
-                for (t1, t2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
-                for i in range(num_qubits)
+                        **{
+                            f"q{i}:{t1}-q{i}.{t2}": QbloxMixerCorrections(
+                                dc_offset_i = 0.0,
+                                dc_offset_q = 0.0,
+                                amp_ratio = None,
+                                phase_error = None,
+                                auto_lo_cal= LoCalEnum.OFF , #"on_lo_interm_freq_change",
+                                auto_sideband_cal= SidebandCalEnum.ON_INTERM_FREQ_CHANGE , #"on_interm_freq_change"
+                            )
+                            for (t1, t2) in [("res", "ro"), ("mw", "01"), ("mw", "12")]
+                            for i in range(num_qubits)
+                        },
+                        # For cross resonance
+                        **{
+                            f"q{i}:{t1}-q{j}.{t2}": QbloxMixerCorrections(
+                                dc_offset_i = 0.0,
+                                dc_offset_q = 0.0,
+                                amp_ratio = None,
+                                phase_error = None,
+                                auto_lo_cal= LoCalEnum.OFF , #"on_lo_interm_freq_change",
+                                auto_sideband_cal= SidebandCalEnum.ON_INTERM_FREQ_CHANGE , #"on_interm_freq_change"
+                            )
+                            for (t1, t2) in [("mw", "01")]
+                            for i in range(num_qubits)
+                            for j in range(max(i-1,1),min(i+1,num_qubits-1)+1,2)
+                        }
             },
             # Parameters not defined nedd to be set as {} to avoid errors
             input_att = {},
