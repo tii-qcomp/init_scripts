@@ -1,0 +1,157 @@
+2026-08-17 10:29:20,364 - qpu186 - INFO - Data directory set to: /home/user/nas_shared/0_quantum_data/01_experiments/qpu186
+2026-08-17 10:29:20,364 - qpu186 - INFO - Finished imports and configuration in 0.00 s
+2026-08-17 10:40:27,589 - superconducting_qubit_tools.measurement_functions.two_qubit_timedomain - ERROR - measure_rabi_cross_driving: Exception 'list' object has no attribute 'reshape'
+Traceback (most recent call last):
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/two_qubit_timedomain.py", line 397, in superconducting_qubit_tools.measurement_functions.two_qubit_timedomain.measure_rabi_cross_driving
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 1183, in setpoints
+    setpoints = setpoints.reshape((len(setpoints), 1))
+                ^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'reshape'
+2026-08-17 10:40:27,590 - superconducting_qubit_tools.measurement_functions.crosstalk - ERROR - measure_microwave_crosstalk: Exception 'list' object has no attribute 'reshape'
+Traceback (most recent call last):
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 376, in superconducting_qubit_tools.measurement_functions.crosstalk.measure_microwave_crosstalk
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 601, in run
+    self._run_iterative(lazy_set)
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 801, in _run_iterative
+    self._iterative_set_and_get(
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 938, in _iterative_set_and_get
+    new_data_raw = gpar.get()  # return xarray dataset
+                   ^^^^^^^^^^
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 463, in superconducting_qubit_tools.measurement_functions.crosstalk.MicrowaveCrosstalkGettable.get
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 466, in superconducting_qubit_tools.measurement_functions.crosstalk.MicrowaveCrosstalkGettable.get
+  File "superconducting_qubit_tools/logging.py", line 38, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/two_qubit_timedomain.py", line 397, in superconducting_qubit_tools.measurement_functions.two_qubit_timedomain.measure_rabi_cross_driving
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 1183, in setpoints
+    setpoints = setpoints.reshape((len(setpoints), 1))
+                ^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'reshape'
+2026-08-17 10:40:38,185 - superconducting_qubit_tools.measurement_functions.two_qubit_timedomain - ERROR - measure_rabi_cross_driving: Exception 'list' object has no attribute 'reshape'
+Traceback (most recent call last):
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/two_qubit_timedomain.py", line 397, in superconducting_qubit_tools.measurement_functions.two_qubit_timedomain.measure_rabi_cross_driving
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 1183, in setpoints
+    setpoints = setpoints.reshape((len(setpoints), 1))
+                ^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'reshape'
+2026-08-17 10:40:38,186 - superconducting_qubit_tools.measurement_functions.crosstalk - ERROR - measure_microwave_crosstalk: Exception 'list' object has no attribute 'reshape'
+Traceback (most recent call last):
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 376, in superconducting_qubit_tools.measurement_functions.crosstalk.measure_microwave_crosstalk
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 601, in run
+    self._run_iterative(lazy_set)
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 801, in _run_iterative
+    self._iterative_set_and_get(
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 938, in _iterative_set_and_get
+    new_data_raw = gpar.get()  # return xarray dataset
+                   ^^^^^^^^^^
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 463, in superconducting_qubit_tools.measurement_functions.crosstalk.MicrowaveCrosstalkGettable.get
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 466, in superconducting_qubit_tools.measurement_functions.crosstalk.MicrowaveCrosstalkGettable.get
+  File "superconducting_qubit_tools/logging.py", line 38, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/two_qubit_timedomain.py", line 397, in superconducting_qubit_tools.measurement_functions.two_qubit_timedomain.measure_rabi_cross_driving
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 1183, in setpoints
+    setpoints = setpoints.reshape((len(setpoints), 1))
+                ^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'reshape'
+2026-08-17 10:40:52,738 - superconducting_qubit_tools.measurement_functions.two_qubit_timedomain - ERROR - measure_rabi_cross_driving: Exception 'list' object has no attribute 'reshape'
+Traceback (most recent call last):
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/two_qubit_timedomain.py", line 397, in superconducting_qubit_tools.measurement_functions.two_qubit_timedomain.measure_rabi_cross_driving
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 1183, in setpoints
+    setpoints = setpoints.reshape((len(setpoints), 1))
+                ^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'reshape'
+2026-08-17 10:40:52,738 - superconducting_qubit_tools.measurement_functions.crosstalk - ERROR - measure_microwave_crosstalk: Exception 'list' object has no attribute 'reshape'
+Traceback (most recent call last):
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 376, in superconducting_qubit_tools.measurement_functions.crosstalk.measure_microwave_crosstalk
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 601, in run
+    self._run_iterative(lazy_set)
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 801, in _run_iterative
+    self._iterative_set_and_get(
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 938, in _iterative_set_and_get
+    new_data_raw = gpar.get()  # return xarray dataset
+                   ^^^^^^^^^^
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 463, in superconducting_qubit_tools.measurement_functions.crosstalk.MicrowaveCrosstalkGettable.get
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 466, in superconducting_qubit_tools.measurement_functions.crosstalk.MicrowaveCrosstalkGettable.get
+  File "superconducting_qubit_tools/logging.py", line 38, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/two_qubit_timedomain.py", line 397, in superconducting_qubit_tools.measurement_functions.two_qubit_timedomain.measure_rabi_cross_driving
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 1183, in setpoints
+    setpoints = setpoints.reshape((len(setpoints), 1))
+                ^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'reshape'
+2026-08-17 10:41:03,754 - superconducting_qubit_tools.measurement_functions.two_qubit_timedomain - ERROR - measure_rabi_cross_driving: Exception 'list' object has no attribute 'reshape'
+Traceback (most recent call last):
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/two_qubit_timedomain.py", line 397, in superconducting_qubit_tools.measurement_functions.two_qubit_timedomain.measure_rabi_cross_driving
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 1183, in setpoints
+    setpoints = setpoints.reshape((len(setpoints), 1))
+                ^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'reshape'
+2026-08-17 10:41:03,754 - superconducting_qubit_tools.measurement_functions.crosstalk - ERROR - measure_microwave_crosstalk: Exception 'list' object has no attribute 'reshape'
+Traceback (most recent call last):
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 376, in superconducting_qubit_tools.measurement_functions.crosstalk.measure_microwave_crosstalk
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 601, in run
+    self._run_iterative(lazy_set)
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 801, in _run_iterative
+    self._iterative_set_and_get(
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 938, in _iterative_set_and_get
+    new_data_raw = gpar.get()  # return xarray dataset
+                   ^^^^^^^^^^
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 463, in superconducting_qubit_tools.measurement_functions.crosstalk.MicrowaveCrosstalkGettable.get
+  File "superconducting_qubit_tools/measurement_functions/crosstalk.py", line 466, in superconducting_qubit_tools.measurement_functions.crosstalk.MicrowaveCrosstalkGettable.get
+  File "superconducting_qubit_tools/logging.py", line 38, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/two_qubit_timedomain.py", line 397, in superconducting_qubit_tools.measurement_functions.two_qubit_timedomain.measure_rabi_cross_driving
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 1183, in setpoints
+    setpoints = setpoints.reshape((len(setpoints), 1))
+                ^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'reshape'
+2026-08-17 10:42:04,820 - superconducting_qubit_tools.measurement_functions.two_qubit_timedomain - ERROR - measure_rabi_cross_driving: Exception 'list' object has no attribute 'reshape'
+Traceback (most recent call last):
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/two_qubit_timedomain.py", line 397, in superconducting_qubit_tools.measurement_functions.two_qubit_timedomain.measure_rabi_cross_driving
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 1183, in setpoints
+    setpoints = setpoints.reshape((len(setpoints), 1))
+                ^^^^^^^^^^^^^^^^^
+AttributeError: 'list' object has no attribute 'reshape'
+2026-08-17 10:42:24,293 - superconducting_qubit_tools.measurement_functions.two_qubit_timedomain - WARNING - Fit failed for measured qubit q1 and driven qubit q0 pulse duration of 2e-06.
+2026-08-17 12:50:03,289 - qpu186XLD - INFO - Data directory set to: /home/user/nas_shared/0_quantum_data/01_experiments/qpu186XLD
+2026-08-17 12:50:03,289 - qpu186XLD - INFO - Finished imports and configuration in 0.01 s
+2026-08-17 12:52:11,726 - superconducting_qubit_tools.measurement_functions.spectroscopy - ERROR - measure_heterodyne_spectroscopy: Exception No module at index 10 installed in cluster. Yet one is defined manually in the hardware description.
+Traceback (most recent call last):
+  File "superconducting_qubit_tools/logging.py", line 31, in superconducting_qubit_tools.logging.log_function_call.decorator.wrapper
+  File "superconducting_qubit_tools/measurement_functions/spectroscopy.py", line 260, in superconducting_qubit_tools.measurement_functions.spectroscopy.measure_heterodyne_spectroscopy
+  File "superconducting_qubit_tools/measurement_functions/spectroscopy.py", line 271, in superconducting_qubit_tools.measurement_functions.spectroscopy.measure_heterodyne_spectroscopy
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 597, in run
+    self._run_batched()
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/measurement/control.py", line 858, in _run_batched
+    new_data_raw = gpar.get()  # return xarray dataset
+                   ^^^^^^^^^^
+  File "superconducting_qubit_tools/measurement_functions/gettables.py", line 191, in superconducting_qubit_tools.measurement_functions.gettables.ScheduleGettable.get
+  File "superconducting_qubit_tools/measurement_functions/gettables.py", line 194, in superconducting_qubit_tools.measurement_functions.gettables.ScheduleGettable.get
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/gettables.py", line 234, in get
+    acquired_data = instr_coordinator.retrieve_acquisition()
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/instrument_coordinator/instrument_coordinator.py", line 349, in retrieve_acquisition
+    self.wait_done(timeout_sec=self.timeout())
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/instrument_coordinator/instrument_coordinator.py", line 379, in wait_done
+    self.get_component(instrument.name).wait_done(timeout_sec)
+  File "/env/.venv/lib64/python3.12/site-packages/quantify/instrument_coordinator/components/qblox_scheduler.py", line 134, in wait_done
+    result = hardware_agent.run(
+             ^^^^^^^^^^^^^^^^^^^
+  File "/env/.venv/lib64/python3.12/site-packages/qblox_scheduler/qblox/hardware_agent.py", line 404, in run
+    self.connect_clusters()
+  File "/env/.venv/lib64/python3.12/site-packages/qblox_scheduler/qblox/hardware_agent.py", line 301, in connect_clusters
+    self._verify_hardware_configuration()
+  File "/env/.venv/lib64/python3.12/site-packages/qblox_scheduler/qblox/hardware_agent.py", line 538, in _verify_hardware_configuration
+    raise ValueError(
+ValueError: No module at index 10 installed in cluster. Yet one is defined manually in the hardware description.
+2026-08-17 12:53:04,415 - qpu186XLD - INFO - Data directory set to: /home/user/nas_shared/0_quantum_data/01_experiments/qpu186XLD
+2026-08-17 12:53:04,415 - qpu186XLD - INFO - Finished imports and configuration in 0.01 s
+2026-08-17 12:53:09,309 - superconducting_qubit_tools.analysis.spectroscopy_analysis - WARNING - Fit results from the magnitude and complex fit are inconsistent. The quantities of interest are obtained from the magnitude fit. The fitted parameters of all fits can be accessed through analysis_obj.fit_results.

@@ -1,5 +1,5 @@
 """
-Initialization script for TII QPU167.
+Initialization script for Platinum.
 
 Author: Giulio, TII QRC
 Version: 1.0
